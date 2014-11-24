@@ -36,18 +36,10 @@ module RebuildGemRpms
     def mock
       puts "Running Mock Build"
 
-      # JJV START HERE:
-      # JJV add setting the failed_list and passed_list in the below logic
-      #    failed_list.delete(item)
-      #    passed_list << item
-
       Dir.chdir(LOCAL_DISTGIT) do
         begin
-          puts "JJV -020- #{Dir.pwd}"
-
           system("rhpkg clone #{line}") unless File.directory?(line)
           Dir.chdir(line) do
-            puts "JJV -030- #{Dir.pwd}"
             system("git checkout cfme-ruby200-5.4-rhel-6")
             result = system("source /opt/rh/ruby200/enable; rhpkg srpm; mock -r #{CANDIDATE} #{line}*.el6.src.rpm")
             if result
@@ -70,33 +62,13 @@ module RebuildGemRpms
 
     def scratch
       puts "Running scratch Build"
-      puts "JJV gem_list ->#{gem_list}<-"
-      puts "JJV failed_list ->#{failed_list}<-"
-      puts "JJV passed_list ->#{passed_list}<-"
-
-      gem_list.each_with_index do |item, i|
-        if i.even?
-          failed_list.delete(item)
-          passed_list << item
-        end
-      end
-
+      # TODO: implement this
       RebuildGemRpmsBatchResult.new(passed_list, failed_list)
     end
 
     def brew
       puts "Running brew Build"
-      puts "JJV gem_list ->#{gem_list}<-"
-      puts "JJV failed_list ->#{failed_list}<-"
-      puts "JJV passed_list ->#{passed_list}<-"
-
-      gem_list.each_with_index do |item, i|
-        if i.even?
-          failed_list.delete(item)
-          passed_list << item
-        end
-      end
-
+      # TODO: implement this
       RebuildGemRpmsBatchResult.new(passed_list, failed_list)
     end
 
@@ -132,24 +104,17 @@ module RebuildGemRpms
   if __FILE__ == $PROGRAM_NAME
 
     opts = read_options
-    puts "JJV opts ->#{opts}<-"
 
     params = {}
-    puts "JJV params ->#{params}<-"
-    puts "JJV opts[:gem_list] ->#{opts[:gem_list]}<-"
-    puts "JJV opts[:file_gem_list] ->#{opts[:file_gem_list]}<-"
-
     params[:gem_list]      = opts[:gem_list]      unless opts[:gem_list].nil?
     params[:file_gem_list] = opts[:file_gem_list] unless opts[:file_gem_list].nil?
 
-    puts "JJV params ->#{params}<-"
     gem_rebuild = RebuildGems.new(params)
 
     ACTIONS.each do |action|
       puts "\naction ->#{action}<-"
       if opts[action]
         result = gem_rebuild.send(action)
-        puts "JJV result ->#{result}<-"
         $stderr.puts "#{action} failed for gems: #{result.failed}" if result.failed.any?
         puts "#{action} passed for: #{result.passed}" if result.passed.any?
       end
