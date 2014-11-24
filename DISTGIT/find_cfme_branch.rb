@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Read an input file, calld distgit_branch_list, listing dist-git repository names
-# are report if they have the branch specified in BRANCH_NAME 
+# are report if they have the branch specified in BRANCH_NAME
 
 BRANCH_LIST_FILE = "distgit_branch_list"
 BRANCH_NAME      = "refs/heads/cfme-ruby200-5.4-rhel-6"
@@ -23,12 +23,11 @@ File.open("#{BRANCH_LIST_FILE}", "r") do |f|
 end
 
 puts "\nHave Branch #{BRANCH_NAME} for:"
-have_branch.each do |repo|
+have_branch.sort.each do |repo|
   puts "    #{repo}"
 end
 
 puts "\nMissing Branch #{BRANCH_NAME} for:"
-missing_branch.each do |repo|
+missing_branch.sort.each do |repo|
   puts "    #{repo}"
 end
-
