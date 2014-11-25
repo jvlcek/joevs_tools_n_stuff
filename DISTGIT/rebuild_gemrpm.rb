@@ -30,8 +30,6 @@ module RebuildGemRpms
     end
 
     def mock
-      puts "Running Mock Build"
-
       failed_list = []
       passed_list = []
 
@@ -51,20 +49,16 @@ module RebuildGemRpms
               end
             end
           rescue => e
-            puts "Recoverable exception Encountered"
-            puts e.message
-            puts e.backtrace.inspect
-            puts "Continuing from exception"
+            puts "Continuing from exception\n#{e.message}\n#{e.backtrace.inspect}"
           end
         end
       end
       gem_list = passed_list
 
-      RebuildGemRpmsBatchResult.new(passed_list, failed_list)
+      RebuildGemRpmsBatchResult.new(gem_list, failed_list)
     end
 
     def scratch
-      puts "Running scratch Build"
       failed_list = []
       passed_list = []
 
@@ -83,20 +77,16 @@ module RebuildGemRpms
               end
             end
           rescue => e
-            puts "Recoverable exception Encountered"
-            puts e.message
-            puts e.backtrace.inspect
-            puts "Continuing from exception"
+            puts "Continuing from exception\n#{e.message}\n#{e.backtrace.inspect}"
           end
         end
       end
       gem_list = passed_list
 
-      RebuildGemRpmsBatchResult.new(passed_list, failed_list)
+      RebuildGemRpmsBatchResult.new(gem_list, failed_list)
     end
 
     def brew
-      puts "Running brew Build"
       # TODO: implement this
       RebuildGemRpmsBatchResult.new(passed_list, failed_list)
     end
