@@ -6,7 +6,6 @@ require 'trollop'
 require 'yaml'
 
 # TODO: Retrieve these from a YAML config file
-BRANCH_LIST_FILE = "distgit_have_branch_list_small"
 BRANCH_NAME      = "cfme-ruby200-5.4-rhel-6"
 BRANCH_REF       = "refs/heads/#{BRANCH_NAME}"
 REPO_HOME_URL    = "http://pkgs.devel.redhat.com/cgit/rpms"
@@ -15,7 +14,7 @@ CANDIDATE        = "cfme-5.4-rhel-6-candidate"
 
 module RebuildGemRpms
   PARAMS      = [:gem_list, :file_gem_list]
-  ACTIONS     = [:mock, :scratch, :brew]
+  BUILD_TYPES = [:mock, :scratch, :brew]
 
   RebuildGemRpmsBatchResult = Struct.new(:passed, :failed)
 
@@ -28,41 +27,71 @@ module RebuildGemRpms
       @gem_list = []
       @gem_list = Array.new(params[:gem_list].split(' ')) unless params[:gem_list].nil?
       @gem_list = read_gem_list_from_file(params[:file_gem_list]) unless params[:file_gem_list].nil?
-
-      @failed_list = gem_list
-      @passed_list = []
     end
 
     def mock
       puts "Running Mock Build"
 
+      failed_list = []
+      passed_list = []
+
+      system('kinit') unless system('klist -s')
       Dir.chdir(LOCAL_DISTGIT) do
-        begin
-          system("rhpkg clone #{line}") unless File.directory?(line)
-          Dir.chdir(line) do
-            system("git checkout cfme-ruby200-5.4-rhel-6")
-            result = system("source /opt/rh/ruby200/enable; rhpkg srpm; mock -r #{CANDIDATE} #{line}*.el6.src.rpm")
-            if result
-              failed_list.delete(item)
-              passed_list << item
-            else
-              system("cp /var/lib/mock/cfme-5.4-rhel-6-candidate/result/*.log .")
+        gem_list.each do |gem|
+          begin
+            system("rhpkg clone #{gem}") unless File.directory?(gem)
+            Dir.chdir(gem) do
+              system("git checkout cfme-ruby200-5.4-rhel-6")
+              result = system("source /opt/rh/ruby200/enable; rhpkg srpm; mock -r #{CANDIDATE} #{gem}*.el6.src.rpm")
+              if result
+                passed_list << gem
+              else
+                failed_list << gem
+                system("cp /var/lib/mock/cfme-5.4-rhel-6-candidate/result/*.log .")
+              end
             end
+          rescue => e
+            puts "Recoverable exception Encountered"
+            puts e.message
+            puts e.backtrace.inspect
+            puts "Continuing from exception"
           end
-        rescue => e
-          puts "Recoverable exception Encountered"
-          puts e.message
-          puts e.backtrace.inspect
-          puts "Continuing from exception"
         end
       end
+      gem_list = passed_list
 
       RebuildGemRpmsBatchResult.new(passed_list, failed_list)
     end
 
     def scratch
       puts "Running scratch Build"
-      # TODO: implement this
+      failed_list = []
+      passed_list = []
+
+      system('kinit') unless system('klist -s')
+      Dir.chdir(LOCAL_DISTGIT) do
+        gem_list.each do |gem|
+          begin
+            system("rhpkg clone #{gem}") unless File.directory?(gem)
+            Dir.chdir(gem) do
+              system("git checkout cfme-ruby200-5.4-rhel-6")
+              result = system("source /opt/rh/ruby200/enable; rhpkg srpm; rhpkg scratch-build --srpm --nowait")
+              if result
+                passed_list << gem
+              else
+                failed_list << gem
+              end
+            end
+          rescue => e
+            puts "Recoverable exception Encountered"
+            puts e.message
+            puts e.backtrace.inspect
+            puts "Continuing from exception"
+          end
+        end
+      end
+      gem_list = passed_list
+
       RebuildGemRpmsBatchResult.new(passed_list, failed_list)
     end
 
@@ -111,12 +140,12 @@ module RebuildGemRpms
 
     gem_rebuild = RebuildGems.new(params)
 
-    ACTIONS.each do |action|
-      puts "\naction ->#{action}<-"
-      if opts[action]
-        result = gem_rebuild.send(action)
-        $stderr.puts "#{action} failed for gems: #{result.failed}" if result.failed.any?
-        puts "#{action} passed for: #{result.passed}" if result.passed.any?
+    BUILD_TYPES.each do |build_type|
+      action = build_type == "mock" ? "passed" : "queued"
+      if opts[build_type]
+        result = gem_rebuild.send(build_type)
+        $stderr.puts "#{build_type} failed for gems: #{result.failed}" if result.failed.any?
+        puts "#{build_type} #{action} for: #{result.passed}" if result.passed.any?
       end
     end
 
