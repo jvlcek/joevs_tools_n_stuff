@@ -157,7 +157,7 @@ module RebuildGemRpms
     gem_rebuild = RebuildGems.new(params)
 
     BUILD_TYPES.each do |build_type|
-      action = build_type == "mock" ? "passed" : "queued"
+      action = build_type == :mock ? "passed" : "queued"
       if opts[build_type]
         result = gem_rebuild.send(build_type)
         $stderr.puts "#{build_type} failed for gems: #{result.failed}" if result.failed.any?
