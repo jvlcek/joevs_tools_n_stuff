@@ -11,6 +11,7 @@ BRANCH_REF       = "refs/heads/#{BRANCH_NAME}"
 REPO_HOME_URL    = "http://pkgs.devel.redhat.com/cgit/rpms"
 LOCAL_DISTGIT    = "#{Dir.home}/distgit"
 CANDIDATE        = "cfme-5.4-rhel-6-candidate"
+COMMIT_MESSAGE   = "Remove the rubyabi macro"
 
 module RebuildGemRpms
   PARAMS      = [:gem_list, :file_gem_list]
@@ -87,8 +88,33 @@ module RebuildGemRpms
     end
 
     def brew
-      # TODO: implement this
-      RebuildGemRpmsBatchResult.new(passed_list, failed_list)
+      failed_list = []
+      passed_list = []
+
+      system('kinit') unless system('klist -s')
+      Dir.chdir(LOCAL_DISTGIT) do
+        gem_list.each do |gem|
+          begin
+            system("rhpkg clone #{gem}") unless File.directory?(gem)
+            Dir.chdir(gem) do
+              system("git checkout cfme-ruby200-5.4-rhel-6")
+              system("git add #{gem}.spec") # assume spec changes, git will ignore none.
+              system("git commit -m \"#{COMMIT_MESSAGE}\"")
+              result = system("rhpkg push; rhpkg build --nowait")
+              if result
+                passed_list << gem
+              else
+                failed_list << gem
+              end
+            end
+          rescue => e
+            puts "Continuing from exception\n#{e.message}\n#{e.backtrace.inspect}"
+          end
+        end
+      end
+      gem_list = passed_list
+
+      RebuildGemRpmsBatchResult.new(gem_list, failed_list)
     end
 
     private
