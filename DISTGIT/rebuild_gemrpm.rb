@@ -21,6 +21,20 @@ module RebuildGemRpms
   PARAMS      = [:gem_list, :file_gem_list]
   BUILD_TYPES = [:mock, :scratch, :brew]
 
+  class RebuildGemResultItem
+    attr_accessor :name, :task_id, :brew_url
+
+    def initialize(name, task_id = nil, brew_url = nil)
+      @name     = name
+      @task_id  = task_id
+      @brew_url = brew_url
+    end
+
+    def to_s
+      "#{name} #{task_id} #{brew_url}\n"
+    end
+  end
+
   class RebuildGemsBatchResult
     attr_accessor :passed, :failed
 
@@ -29,17 +43,20 @@ module RebuildGemRpms
       @failed = failed
     end
 
-    def failed_to_s
-      failed.each { |gem| puts "#{gem.to_s}" } if failed.any?
+    def to_s
+      if failed.any?
+        puts "\n\tfailed:"
+        puts failed.collect(&:to_s)
+      end
+      if passed.any?
+        puts "\n\tqueued:"
+        puts passed.collect(&:to_s)
+      end
     end
 
-    def passed_to_s
-      passed.each { |gem| puts "#{gem.to_s}" } if passed.any?
-    end
-
-    def passed_brew_jobs_succeeeded?
+    def brew_jobs_succeeeded?
       passed.each do |gem|
-        puts "#{gem.to_s} #{build_succeeded?(gem.task_id)}"
+        puts "#{gem} #{build_succeeded?(gem.task_id)}"
       end if passed.any?
     end
 
@@ -61,20 +78,6 @@ module RebuildGemRpms
       end
       return true if current_state == "closed"
       false
-    end
-  end
-
-  class RebuildGemResultItem
-    attr_accessor :name, :task_id, :brew_url
-
-    def initialize(name, task_id = nil, brew_url = nil)
-      @name     = name
-      @task_id  = task_id
-      @brew_url = brew_url
-    end
-
-    def to_s
-      "#{name} #{task_id} #{brew_url}"
     end
   end
 
@@ -231,18 +234,9 @@ module RebuildGemRpms
     gem_rebuild = RebuildGems.new(params)
 
     BUILD_TYPES.each do |build_type|
-      action = build_type == :mock ? "passed" : "queued"
       if opts[build_type]
         result = gem_rebuild.send(build_type)
-        if result.failed.any?
-          puts "\n\t#{build_type} failed for:"
-          result.failed_to_s
-        end
-        if result.passed.any?
-          puts "\n\t#{build_type} #{action} for:"
-          result.passed_to_s
-        end
-
+        result.to_s
         result.passed_brew_jobs_succeeeded? if opts[:wait]
       end
     end
