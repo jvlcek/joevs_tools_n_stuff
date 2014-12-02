@@ -31,7 +31,7 @@ module RebuildGemRpms
     end
 
     def to_s
-      "#{name} #{task_id} #{brew_url}\n"
+      format("%-30s %-10s %s", name, task_id, brew_url)
     end
   end
 
@@ -55,6 +55,7 @@ module RebuildGemRpms
     end
 
     def brew_jobs_succeeeded?
+      puts "\n\t Brew Jobs Succeeded"
       passed.each do |gem|
         puts "#{gem} #{build_succeeded?(gem.task_id)}"
       end if passed.any?
@@ -67,6 +68,8 @@ module RebuildGemRpms
     end
 
     def build_succeeded?(task_id)
+      return true if task_id.nil?
+
       current_state = build_state(task_id)
       STDOUT.write "\r - "
       while current_state == "open" || current_state == "free"
@@ -82,18 +85,31 @@ module RebuildGemRpms
   end
 
   class RebuildGems
-    attr_accessor :gem_list, :mock, :scratch, :brew
+    attr_accessor :gem_list, :mock, :scratch, :brew, :build_type
 
     def initialize(params)
       raise ArgumentError, "Must supply only one of #{PARAMS}" unless (params.keys & PARAMS).size == 1
-
+      @build_type = nil
       @gem_list = []
       gems = Array.new(params[:gem_list].split(' ')) unless params[:gem_list].nil?
       gems = read_gem_list_from_file(params[:file_gem_list]) unless params[:file_gem_list].nil?
       gems.each { |gem| @gem_list << RebuildGemResultItem.new(gem) }
     end
 
-    def mock
+    def record_passed(as_ret, gem)
+      unless build_type == :mock
+        gem.task_id  = as_ret.output.split("\n")[6].split(" ")[2]
+        gem.brew_url = as_ret.output.split("\n")[7].split(" ")[2]
+      end
+      puts "Passed: - #{as_ret.output}\n#{as_ret.error}"
+    end
+
+    def report_failure(as_ret)
+      puts "Error: - #{as_ret.output}\n#{as_ret.error}"
+      AwesomeSpawn.run("cp /var/lib/mock/cfme-5.4-rhel-6-candidate/result/*.log .") if build_type == :mock
+    end
+
+    def build_loop
       failed_list = []
       passed_list = []
 
@@ -103,15 +119,13 @@ module RebuildGemRpms
           begin
             AwesomeSpawn.run("rhpkg clone #{gem.name}") unless File.directory?(gem.name)
             Dir.chdir(gem.name) do
-              AwesomeSpawn.run("git checkout #{BRANCH_NAME}")
-              as_ret = AwesomeSpawn.run("source /opt/rh/ruby200/enable; rhpkg srpm; mock -r #{CANDIDATE} #{gem.name}*.el6.src.rpm")
+              as_ret = yield(gem.name)
               if as_ret.exit_status == 0
                 passed_list << gem
-                puts "Passed: - #{as_ret.output}\n#{as_ret.error}"
+                record_passed(as_ret, gem)
               else
                 failed_list << gem
-                puts "Error: - #{as_ret.output}\n#{as_ret.error}"
-                AwesomeSpawn.run("cp /var/lib/mock/cfme-5.4-rhel-6-candidate/result/*.log .")
+                report_failure(as_ret)
               end
             end
           rescue => e
@@ -125,72 +139,29 @@ module RebuildGemRpms
       RebuildGemsBatchResult.new(gem_list, failed_list)
     end
 
-    def scratch
-      failed_list = []
-      passed_list = []
-
-      system('kinit') unless system('klist -s')
-      Dir.chdir(LOCAL_DISTGIT) do
-        gem_list.each do |gem|
-          begin
-            AwesomeSpawn.run("rhpkg clone #{gem.name}") unless File.directory?(gem.name)
-            Dir.chdir(gem.name) do
-              AwesomeSpawn.run("git checkout #{BRANCH_NAME}")
-              as_ret = AwesomeSpawn.run("source /opt/rh/ruby200/enable; rhpkg srpm; rhpkg scratch-build --srpm --nowait")
-              if as_ret.exit_status == 0
-                gem.task_id  = as_ret.output.split("\n")[6].split(" ")[2]
-                gem.brew_url = as_ret.output.split("\n")[7].split(" ")[2]
-                passed_list << gem
-                puts "->Passed: - #{as_ret.output}\n#{as_ret.error}<-"
-              else
-                failed_list << gem
-                puts "Error: - #{as_ret.output}\n#{as_ret.error}"
-              end
-            end
-          rescue => e
-            failed_list << gem
-            puts "Continuing from exception\n#{e.message}\n#{e.backtrace.inspect}"
-          end
-        end
+    def mock
+      @build_type = :mock
+      build_loop do |gem_name|
+        AwesomeSpawn.run("git checkout #{BRANCH_NAME}")
+        AwesomeSpawn.run("source /opt/rh/ruby200/enable; rhpkg srpm; mock -r #{CANDIDATE} #{gem_name}*.el6.src.rpm")
       end
-      gem_list = passed_list
+    end
 
-      RebuildGemsBatchResult.new(gem_list, failed_list)
+    def scratch
+      @build_type = :scratch
+      build_loop do
+        AwesomeSpawn.run("git checkout #{BRANCH_NAME}")
+        AwesomeSpawn.run("source /opt/rh/ruby200/enable; rhpkg srpm; rhpkg scratch-build --srpm --nowait")
+      end
     end
 
     def brew
-      failed_list = []
-      passed_list = []
-
-      system('kinit') unless system('klist -s')
-      Dir.chdir(LOCAL_DISTGIT) do
-        gem_list.each do |gem|
-          begin
-            AwesomeSpawn.run("rhpkg clone #{gem.name}") unless File.directory?(gem.name)
-            Dir.chdir(gem.name) do
-              AwesomeSpawn.run("git checkout #{BRANCH_NAME}")
-              AwesomeSpawn.run("git add #{gem}.spec") # assume spec changes, git will ignore none.
-              AwesomeSpawn.run("git commit -m \"#{COMMIT_MESSAGE}\"")
-              as_ret = AwesomeSpawn.run("rhpkg push; rhpkg build --nowait")
-              if as_ret.exit_status == 0
-                gem.task_id  = as_ret.output.split("\n")[6].split(" ")[2]
-                gem.brew_url = as_ret.output.split("\n")[7].split(" ")[2]
-                passed_list << gem
-                puts "->Passed: - #{as_ret.output}\n#{as_ret.error}<-"
-              else
-                failed_list << gem
-                puts "Error: - #{as_ret.output}\n#{as_ret.error}"
-              end
-            end
-          rescue => e
-            failed_list << gem
-            puts "Continuing from exception\n#{e.message}\n#{e.backtrace.inspect}"
-          end
-        end
+      @build_type = :brew
+      build_loop do |gem_name|
+        AwesomeSpawn.run("git checkout #{BRANCH_NAME}")
+        AwesomeSpawn.run("git add #{gem_name}.spec") # assume spec changes, git will ignore none.
+        AwesomeSpawn.run("git commit -m \"#{COMMIT_MESSAGE}\"")
       end
-      gem_list = passed_list
-
-      RebuildGemsBatchResult.new(gem_list, failed_list)
     end
 
     private
@@ -237,7 +208,7 @@ module RebuildGemRpms
       if opts[build_type]
         result = gem_rebuild.send(build_type)
         result.to_s
-        result.passed_brew_jobs_succeeeded? if opts[:wait]
+        result.brew_jobs_succeeeded? if opts[:wait]
       end
     end
 
