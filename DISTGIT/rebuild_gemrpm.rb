@@ -97,14 +97,12 @@ module RebuildGemRpms
     end
 
     def record_passed(as_ret, gem)
-      unless build_type == :mock
-        gem.task_id  = as_ret.output.split("\n")[6].split(" ")[2]
-        gem.brew_url = as_ret.output.split("\n")[7].split(" ")[2]
-      end
       puts "Passed: - #{as_ret.output}\n#{as_ret.error}"
+      gem.task_id  = as_ret.output.split("\n").select{|x| x.match("Created task:")}[0].to_s.split(" ")[2]
+      gem.brew_url = as_ret.output.split("\n").select{|x| x.match("Task info:")}[0].to_s.split(" ")[2]
     end
 
-    def report_failure(as_ret)
+    def record_failure(as_ret)
       puts "Error: - #{as_ret.output}\n#{as_ret.error}"
       AwesomeSpawn.run("cp /var/lib/mock/cfme-5.4-rhel-6-candidate/result/*.log .") if build_type == :mock
     end
@@ -125,7 +123,7 @@ module RebuildGemRpms
                 record_passed(as_ret, gem)
               else
                 failed_list << gem
-                report_failure(as_ret)
+                record_failure(as_ret)
               end
             end
           rescue => e
@@ -157,10 +155,11 @@ module RebuildGemRpms
 
     def brew
       @build_type = :brew
-      build_loop do |gem_name|
+      build_loop do
         AwesomeSpawn.run("git checkout #{BRANCH_NAME}")
-        AwesomeSpawn.run("git add #{gem_name}.spec") # assume spec changes, git will ignore none.
+        AwesomeSpawn.run("git add *.spec") # assume spec changes, git will ignore none.
         AwesomeSpawn.run("git commit -m \"#{COMMIT_MESSAGE}\"")
+        AwesomeSpawn.run("rhpkg push; rhpkg build --nowait")
       end
     end
 
