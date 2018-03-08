@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+error_exit() {
+  echo -e "ERROR EXITING: ${1}"
+  exit
+}
+
+run_cmd () {
+  echo -e "  $@"
+  if [[ $arg_dryrun == false ]]; then
+    eval "$@"
+  fi
+}
+
+oc_logout() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+  run_cmd "oc logout"
+}
+
+oc_login() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 3 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  openshift_host="$1"
+  openshift_port="$2"
+  openshift_user="$3"
+  
+  run_cmd "oc login https://${openshift_host}:${openshift_port} -u ${openshift_user}"
+}
+  
+new_project() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 3 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+  description="$2"
+  displayname="$3"
+
+  run_cmd "oc new-project ${project_name} --description=\"${description}\" --display-name=\"${displayname}\""
+}
+
+set_project() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 1 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+
+  run_cmd "oc project ${project_name}"
+}
+
+add_service_accounts_to_anyuid_scc() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 1 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+
+  echo -e "\n  Add the miq-anyuid and miq-orchestrator service accounts to the anyuid Security Context Constraints (SCC)"
+  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:miq-anyuid"
+  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:miq-orchestrator"
+  run_cmd "oc describe scc anyuid | grep Users"
+}
+
+add_privileged_service_accounts_to_privileged_scc() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 1 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+
+  echo -e "\n  Add the miq-privileged service account to the privileged Security Context Constraints (SCC)"
+  run_cmd "oc adm policy add-scc-to-user privileged system:serviceaccount:${project_name}:miq-privileged"
+  run_cmd "oc describe scc privileged | grep Users"
+}
+
+setup_the_miq-httpd_service_account() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 1 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+
+  echo -e "\n  Create the miq-sysadmin SCC and add the miq-httpd service account to it."
+
+  if [[ $arg_minishift == true ]]; then
+    run_cmd "oc create -f https://raw.githubusercontent.com/ManageIQ/manageiq-pods/master/templates/miq-scc-sysadmin.yaml"
+    scc="miq-sysadmin"
+  else
+    scc="anyuid"
+  fi
+
+  run_cmd "oc adm policy add-scc-to-user ${scc} system:serviceaccount:${project_name}:miq-httpd"
+  run_cmd "oc describe scc ${scc} | grep Users"
+}
+
+create_db_pv() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 1 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+
+  echo -e "\n  Make a persistent volume to host the MIQ database data"
+
+# JJV Start here
+}
+
+parse_args() {
+  # JJV TBD
+
+  if [[ $# -eq 1 ]]; then
+    arg_dryrun=true
+  else
+    arg_dryrun=false
+  fi
+
+  arg_github_source=true
+  arg_minishift=false
+  arg_openshift_host="osemaster.sbu.lab.eng.bos.redhat.com"
+  arg_openshift_port="8443"
+  arg_openshift_user="jvlcek"
+  arg_project_name="cloudforms-ext-auth"
+  arg_description="JoeV's Cloudforms External Authentication"
+  arg_displayname="CFME Ext-Auth"
+}
+
+# JJV TODO Add Clean all this stuff up and start from scratch
+  
+parse_args "$@"
+oc_logout
+oc_login "${arg_openshift_host}" "${arg_openshift_port}" "${arg_openshift_user}"
+new_project "${arg_project_name}" "${arg_description}" "${arg_displayname}"
+set_project "${arg_project_name}"
+add_service_accounts_to_anyuid_scc "${arg_project_name}"
+add_privileged_service_accounts_to_privileged_scc "${arg_project_name}"
+setup_the_miq-httpd_service_account "${arg_project_name}"
+
