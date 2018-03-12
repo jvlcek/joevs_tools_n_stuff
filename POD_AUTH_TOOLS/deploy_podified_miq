@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
 error_exit() {
-  echo -e "ERROR EXITING: ${1}"
+  echo -e "\nERROR EXITING: ${1}"
   exit
 }
 
 run_cmd () {
+  run_cmd_status=0
+
   echo -e "  $@"
-  if [[ $arg_dryrun == false ]]; then
+  if [[ $dryrun == false ]]; then
     eval "$@"
+    run_cmd_status=$?
   fi
 }
 
@@ -23,11 +26,14 @@ oc_login() {
   if [[ $# -ne 3 ]]; then
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
-  openshift_host="$1"
-  openshift_port="$2"
-  openshift_user="$3"
+  host="$1"
+  port="$2"
+  user="$3"
   
-  run_cmd "oc login https://${openshift_host}:${openshift_port} -u ${openshift_user}"
+  run_cmd "oc login https://${host}:${port} -u ${user}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} Failed to login"
+  fi
 }
   
 new_project() {
@@ -52,6 +58,9 @@ set_project() {
   project_name="$1"
 
   run_cmd "oc project ${project_name}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} failed to set the project to ${project_name}"
+  fi
 }
 
 add_service_accounts_to_anyuid_scc() {
@@ -62,7 +71,7 @@ add_service_accounts_to_anyuid_scc() {
   fi
   project_name="$1"
 
-  echo -e "\n  Add the miq-anyuid and miq-orchestrator service accounts to the anyuid Security Context Constraints (SCC)"
+  echo -e "\n  # Add the miq-anyuid and miq-orchestrator service accounts to the anyuid Security Context Constraints (SCC)"
   run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:miq-anyuid"
   run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:miq-orchestrator"
   run_cmd "oc describe scc anyuid | grep Users"
@@ -76,7 +85,7 @@ add_privileged_service_accounts_to_privileged_scc() {
   fi
   project_name="$1"
 
-  echo -e "\n  Add the miq-privileged service account to the privileged Security Context Constraints (SCC)"
+  echo -e "\n  # Add the miq-privileged service account to the privileged Security Context Constraints (SCC)"
   run_cmd "oc adm policy add-scc-to-user privileged system:serviceaccount:${project_name}:miq-privileged"
   run_cmd "oc describe scc privileged | grep Users"
 }
@@ -84,15 +93,17 @@ add_privileged_service_accounts_to_privileged_scc() {
 setup_the_miq-httpd_service_account() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  if [[ $# -ne 1 ]]; then
+  if [[ $# -ne 3 ]]; then
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
   project_name="$1"
+  git_repo="$2"
+  git_branch="$3"
 
-  echo -e "\n  Create the miq-sysadmin SCC and add the miq-httpd service account to it."
+  echo -e "\n  # Create the miq-sysadmin SCC and add the miq-httpd service account to it."
 
-  if [[ $arg_minishift == true ]]; then
-    run_cmd "oc create -f https://raw.githubusercontent.com/ManageIQ/manageiq-pods/master/templates/miq-scc-sysadmin.yaml"
+  if [[ $minishift == true ]]; then
+    run_cmd "oc create -f https://raw.githubusercontent.com/${git_repo}/manageiq-pods/${git_branch}/templates/miq-scc-sysadmin.yaml"
     scc="miq-sysadmin"
   else
     scc="anyuid"
@@ -110,38 +121,59 @@ create_db_pv() {
   fi
   project_name="$1"
 
-  echo -e "\n  Make a persistent volume to host the MIQ database data"
+  if [[ $minishift == true ]]; then
+    echo -e "\n  # Make a persistent volume to host the MIQ database data"
 
-# JJV Start here
+    # JJV TBD
+  fi
+}
+
+deploy_miq() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 2 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  git_repo="$1"
+  git_branch="$2"
+
+  echo -e "\n  # Create the MIQ template for deployment and verify it is now available in your project"
+  run_cmd "oc create -f https://raw.githubusercontent.com/${git_repo}/manageiq-pods/${git_branch}/templates/miq-scc-sysadmin.yaml"
+  run_cmd "oc new-app --template=manageiq"
 }
 
 parse_args() {
   # JJV TBD
 
   if [[ $# -eq 1 ]]; then
-    arg_dryrun=true
+    dryrun=true
   else
-    arg_dryrun=false
+    dryrun=false
   fi
 
-  arg_github_source=true
-  arg_minishift=false
-  arg_openshift_host="osemaster.sbu.lab.eng.bos.redhat.com"
-  arg_openshift_port="8443"
-  arg_openshift_user="jvlcek"
-  arg_project_name="cloudforms-ext-auth"
-  arg_description="JoeV's Cloudforms External Authentication"
-  arg_displayname="CFME Ext-Auth"
+  git_repo="ManageIQ"
+  git_branch="master"
+  minishift=true
+
+  openshift_host="osemaster.sbu.lab.eng.bos.redhat.com"
+  openshift_port="8443"
+  openshift_user="jvlcek"
+
+  project_name="cloudforms-ext-auth"
+  project_description="JoeV's Cloudforms External Authentication"
+  project_displayname="CFME Ext-Auth"
 }
 
 # JJV TODO Add Clean all this stuff up and start from scratch
   
 parse_args "$@"
 oc_logout
-oc_login "${arg_openshift_host}" "${arg_openshift_port}" "${arg_openshift_user}"
-new_project "${arg_project_name}" "${arg_description}" "${arg_displayname}"
-set_project "${arg_project_name}"
-add_service_accounts_to_anyuid_scc "${arg_project_name}"
-add_privileged_service_accounts_to_privileged_scc "${arg_project_name}"
-setup_the_miq-httpd_service_account "${arg_project_name}"
+oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
+new_project "${project_name}" "${project_description}" "${project_displayname}"
+set_project "${project_name}"
+add_service_accounts_to_anyuid_scc "${project_name}"
+add_privileged_service_accounts_to_privileged_scc "${project_name}"
+setup_the_miq-httpd_service_account "${project_name}" "${git_repo}" "${git_branch}"
+create_db_pv "${project_name}"
+deploy_miq "${git_repo}" "${git_branch}"
 
