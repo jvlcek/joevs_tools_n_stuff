@@ -1,19 +1,9 @@
 #!/usr/bin/env bash
 
-error_exit() {
-  echo -e "\nERROR EXITING: ${1}"
-  exit
-}
-
-run_cmd () {
-  run_cmd_status=0
-
-  echo -e "  $@"
-  if [[ $dryrun == false ]]; then
-    eval "$@"
-    run_cmd_status=$?
-  fi
-}
+script_path=${0%/*}
+if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
+. "$script_path/parse_args"
+. "$script_path/deploy_podified_utils"
 
 oc_logout() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
@@ -138,30 +128,8 @@ deploy_miq() {
   git_branch="$2"
 
   echo -e "\n  # Create the MIQ template for deployment and verify it is now available in your project"
-  run_cmd "oc create -f https://raw.githubusercontent.com/${git_repo}/manageiq-pods/${git_branch}/templates/miq-scc-sysadmin.yaml"
+  run_cmd "oc create -f https://raw.githubusercontent.com/ManageIQ/manageiq-pods/master/templates/miq-template.yaml"
   run_cmd "oc new-app --template=manageiq"
-}
-
-parse_args() {
-  # JJV TBD
-
-  if [[ $# -eq 1 ]]; then
-    dryrun=true
-  else
-    dryrun=false
-  fi
-
-  git_repo="ManageIQ"
-  git_branch="master"
-  minishift=true
-
-  openshift_host="osemaster.sbu.lab.eng.bos.redhat.com"
-  openshift_port="8443"
-  openshift_user="jvlcek"
-
-  project_name="cloudforms-ext-auth"
-  project_description="JoeV's Cloudforms External Authentication"
-  project_displayname="CFME Ext-Auth"
 }
 
 # JJV TODO Add Clean all this stuff up and start from scratch

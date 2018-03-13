@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+error_exit() {
+  echo -e "\nERROR EXITING: ${1}"
+  exit
+}
+
+run_cmd () {
+  run_cmd_status=0
+
+  echo -e "  $@"
+  if [[ $trial_run == false ]]; then
+    eval "$@"
+    run_cmd_status=$?
+  fi
+}
+
