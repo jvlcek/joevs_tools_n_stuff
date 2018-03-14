@@ -3,3 +3,9 @@ run_deploy_podified_cmg
 .run_deploy_podified_miq.swp
 .run_deploy_podified_cmg.swp
 
+run_destroy_podified_miq
+run_destroy_podified_cmg
+.run_destroy_podified_miq.swp
+.run_destroy_podified_cmg.swp
+
+
