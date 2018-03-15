@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# This script creates usefull Openshift related shell functions.
+# It assumes `oc login` has been executed.
+
+# To run these functions from the command line do:
+# ### Do a one time create of a sym link
+#    cd $HOME/pods
+#    ln -s ${MY_GIT_REPOS}/joevs_tools_n_stuff/POD_AUTH_TOOLS
+#
+# ### Source this file
+#
+# export POD_HOME="${HOME}/pods"
+# . ${POD_HOME}/POD_AUTH_TOOLS/cmd_line_utils 
+# 
+# ### or add the following to ~/.bashrc
+#    export POD_HOME="${HOME}/pods"
+#    if [[ -f "${POD_HOME}/POD_AUTH_TOOLS/cmd_line_utils" ]]; then
+#      . ${POD_HOME}/POD_AUTH_TOOLS/cmd_line_utils 
+#    fi
+#
+
+
+httpd_pod() {
+  oc get pods | egrep "httpd-[1-9]" | cut -f1 -d" "
+}
+
+cmg_pod() {
+  oc get pods | grep "httpd-configmap-generator" | cut -f1 -d" "
+}
+
+ssh2httpd() {
+  oc rsh `httpd_pod` bash -i
+}
+
+ssh2cmg() {
+  oc rsh `cmg_pod` bash -i
+}
+
