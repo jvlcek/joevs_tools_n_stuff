@@ -2,7 +2,7 @@
 
 error_exit() {
   echo -e "\nERROR EXITING: ${1}"
-  exit
+  exit 1
 }
 
 run_cmd () {

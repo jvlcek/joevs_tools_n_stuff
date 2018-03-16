@@ -2,7 +2,7 @@
 
 script_path=${0%/*}
 if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
-. "$script_path/parse_args"
+. "$script_path/parse_podify_args"
 . "$script_path/deploy_podified_utils"
 
 scale_down_pods() {
@@ -46,7 +46,7 @@ delete_project() {
   run_cmd "oc delete project ${project_name}"
 }
 
-parse_args "$@"
+parse_podify_args "$@"
 oc_logout
 oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
 set_project "${project_name}"

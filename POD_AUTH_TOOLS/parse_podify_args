@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-usage () {
+usage() {
   this_script="$(basename $0)"
 
   # Optional
@@ -42,7 +42,7 @@ usage () {
   echo ""
 }
 
-parse_args() {
+parse_podify_args() {
   trial_run=false
   minishift=false
   git_repo="ManageIQ"

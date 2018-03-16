@@ -2,7 +2,7 @@
 
 script_path=${0%/*}
 if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
-. "$script_path/parse_args"
+. "$script_path/parse_podify_args"
 . "$script_path/deploy_podified_utils"
 
 setup_the_httpd-cmg_service_account() {
@@ -42,7 +42,7 @@ deploy_cmg() {
   run_cmd "oc new-app --template=httpd-configmap-generator"
 }
   
-parse_args "$@"
+parse_podify_args "$@"
 oc_logout
 oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
 new_project "${project_name}" "${project_description}" "${project_displayname}"
