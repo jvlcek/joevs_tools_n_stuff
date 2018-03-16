@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+usage() {
+  this_script="$(basename $0)"
+
+  # Optional
+  echo "Usage: ${this_script} [options]"
+
+  echo "${this_script} \\"
+  echo "  -h <MiQ Host> \\"
+  echo "  -s <directory server> \\"
+  echo "  -d <domain> \\"
+  echo "  -r <real> \\"
+  echo "  -u <principal user> \\"
+  echo "  -p <principal user password> \\"
+  echo "  -t [false] trial_run flag \\"
+  echo ""
+
+  echo "Required switches:"
+  echo "  -h <MiQ Host> \\"
+  echo "  -s <directory server> \\"
+  echo "  -d <domain> \\"
+  echo "  -r <real> \\"
+  echo "  -u <principal user> \\"
+  echo "  -p <principal user password> \\"
+  echo ""
+
+  echo "Optional switches:"
+  echo "  -t [false] trial_run flag \\"
+  echo ""
+
+  echo "Example usage:"
+  echo "${this_script} \\"
+  echo "  -h miq-pod.example.com \\"
+  echo "  -s domain-server.example.com \\"
+  echo "  -d example.com \\"
+  echo "  -r EXAMPLE.COM \\"
+  echo "  -u admin \\"
+  echo "  -p secret_password \\"
+  echo ""
+}
+
+parse_cmg_args() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  trial_run=false
+
+  while getopts "h:s:d:r:u:p:t" opt; do
+    case $opt in
+    h)
+      miq_host=$OPTARG
+      ;;
+    s)
+      server=$OPTARG
+      ;;
+    d)
+      domain=$OPTARG
+      ;;
+    r)
+      realm=$OPTARG
+      ;;
+    u)
+      principal_user=$OPTARG
+      ;;
+    p)
+      principal_user_password=$OPTARG
+      ;;
+    t)
+      trial_run=true
+      ;;
+    ?)
+      echo "*** ? ***"
+      usage
+      exit 1
+      ;;
+    :)
+      echo "*** : ***"
+      usage
+      exit 1
+      ;;
+    esac
+  done
+
+  if [ -z $miq_host ]; then
+    usage
+    error_exit "${FUNCNAME} Missing *REQUIRED* field: -h <MiQ Host>"
+  fi
+
+  if [ -z $server ]; then
+    usage
+    error_exit "${FUNCNAME} Missing -s <directory server>"
+  fi
+
+  if [ -z $domain ]; then
+    usage
+    error_exit "${FUNCNAME} Missing -d <domain>"
+  fi
+
+  if [ -z $realm ]; then
+    usage
+    error_exit "${FUNCNAME} Missing -r <real>"
+  fi
+
+  if [ -z $principal_user ]; then
+    usage
+    error_exit "${FUNCNAME} Missing -u <principal user>"
+  fi
+
+  if [ -z $principal_user_password ]; then
+    usage
+    error_exit "${FUNCNAME} Missing *REQUIRED* field: -p <principal user password>"
+  fi
+
+    echo "miq_host                ->${miq_host}<-"
+    echo "server                  ->${server}<-"
+    echo "domain                  ->${domain}<-"
+    echo "realm                   ->${realm}<-"
+    echo "principal_user          ->${principal_user}<-"
+    echo "principal_user_password ->${principal_user_password}<-"
+    echo "trial_run               ->${trial_run}<-"
+}
+

@@ -8,4 +8,6 @@ run_destroy_podified_cmg
 .run_destroy_podified_miq.swp
 .run_destroy_podified_cmg.swp
 
+run_gen_ipa_configmap
+.run_gen_ipa_configmap.swp
 

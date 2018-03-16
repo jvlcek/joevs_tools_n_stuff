@@ -43,6 +43,8 @@ usage() {
 }
 
 parse_podify_args() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
   trial_run=false
   minishift=false
   git_repo="ManageIQ"
