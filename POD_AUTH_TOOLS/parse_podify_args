@@ -98,9 +98,6 @@ parse_podify_args() {
   if [ -z $openshift_host ]; then
     echo "Missing *REQUIRED* field:"
     echo "  -h <OpenShift Host> *REQUIRED* Openshift Host Name \\"
-    echo "  -p <OpenShift Port> *REQUIRED* Openshift Port Number \\"
-    echo "  -u <OpenShift User> *REQUIRED* Openshift User Name \\"
-    echo "  -P <Project Name>   *REQUIRED* Openshift Project Name \\"
     echo ""
     usage
     exit 1
@@ -117,7 +114,6 @@ parse_podify_args() {
   if [ -z $openshift_user ]; then
     echo "Missing *REQUIRED* field:"
     echo "  -u <OpenShift User> *REQUIRED* Openshift User Name \\"
-    echo "  -P <Project Name>   *REQUIRED* Openshift Project Name \\"
     echo ""
     usage
     exit 1
