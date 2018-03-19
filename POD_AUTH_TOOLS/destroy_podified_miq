@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+script_path=${0%/*}
+if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
+. "$script_path/parse_podify_args"
+. "$script_path/deploy_podified_utils"
+
+scale_down_pods() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  echo -e "\n  # Scale all pods to 0"
+  for i in $(run_cmd "oc get dc" | cut -d " " -f 1 | grep -v NAME); do
+    run_cmd "oc scale dc $i --replicas=0"
+  done
+}
+
+wait_for_pod_scale_down() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  echo -e "\n  # wait for all pods to scale to 0"
+  while [[ $( run_cmd "oc get pods" | grep -v "Error" | grep -v "oc get pods" | wc -l ) -ne 0 ]]; do
+    echo "Pods still running"
+    sleep 10
+  done
+  echo "Done"
+
+}
+
+delete_application() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  echo -e "\n  # Delete the application"
+  run_cmd "oc delete all -l app=manageiq"
+}
+
+delete_project() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 1 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+
+
+  echo -e "\n  # Delete the project"
+  run_cmd "oc delete project ${project_name}"
+}
+
+parse_podify_args "$@"
+oc_logout
+oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
+set_project "${project_name}"
+scale_down_pods
+wait_for_pod_scale_down
+delete_application
+delete_project "${project_name}"
+
+

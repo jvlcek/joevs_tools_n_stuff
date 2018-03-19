@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+error_exit() {
+  echo -e "\nERROR EXITING: ${1}"
+  exit 1
+}
+
+run_cmd () {
+  run_cmd_status=0
+
+  echo -e "  $@"
+  if [[ $trial_run == false ]]; then
+    eval "$@"
+    run_cmd_status=$?
+  fi
+}
+
+oc_logout() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+  run_cmd "oc logout"
+}
+
+oc_login() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 3 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  host="$1"
+  port="$2"
+  user="$3"
+  
+  run_cmd "oc login https://${host}:${port} -u ${user}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} Failed to login"
+  fi
+}
+  
+new_project() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 3 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+  description="$2"
+  displayname="$3"
+
+  run_cmd "oc new-project ${project_name} --description=\"${description}\" --display-name=\"${displayname}\""
+}
+
+set_project() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 1 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  project_name="$1"
+
+  run_cmd "oc project ${project_name}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} failed to set the project to ${project_name}"
+  fi
+}
+
