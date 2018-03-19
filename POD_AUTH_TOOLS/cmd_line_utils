@@ -29,6 +29,14 @@ cmg_pod() {
   oc get pods | grep "httpd-configmap-generator" | cut -f1 -d" "
 }
 
+httpd_pod_status() {
+  oc get pods | egrep "httpd-[1-9]" | sed s/" [[:space:]]*"/" "/g  | cut -f 3 -d " "
+}
+
+cmg_pod_status() {
+  oc get pods | grep "httpd-configmap-generator" | sed s/" [[:space:]]*"/" "/g  | cut -f 3 -d " "
+}
+
 ssh2httpd() {
   oc rsh `httpd_pod` bash -i
 }

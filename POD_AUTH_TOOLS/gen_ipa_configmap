@@ -25,12 +25,12 @@ generate_configmap() {
 
   long_cmd="oc rsh $cmg_pod $cmg_cmd ipa "
   long_cmd+="--force "
-  long_cmd+="--host=miq-pod.jvlcek.redhat.com "
-  long_cmd+="--ipa-server=joev-ipa16.jvlcek.redhat.com "
-  long_cmd+="--ipa-domain=jvlcek.redhat.com "
-  long_cmd+="--ipa-realm=JVLCEK.REDHAT.COM "
-  long_cmd+="--ipa-principal=admin "
-  long_cmd+="--ipa-password=smartvm "
+  long_cmd+="--host=${miq_host} "
+  long_cmd+="--${server} "
+  long_cmd+="--ipa-domain=${domain} "
+  long_cmd+="--ipa-realm=${realm} "
+  long_cmd+="--ipa-principal=${principal_user} "
+  long_cmd+="--ipa-password=${principal_user_password} "
   long_cmd+="--debug "
   long_cmd+="-o /tmp/external-ipa.yaml "
 
@@ -54,4 +54,6 @@ parse_cmg_args "$@"
 set_cmg_pod
 generate_configmap
 fecth_configmap
+
+scale_down_cmg
 
