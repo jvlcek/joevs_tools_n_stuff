@@ -19,7 +19,8 @@ set_cmg_pod() {
 generate_configmap() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  cmg_cmd="/opt/httpd_configmap_generator/bin/httpd_configmap_generator"
+  # Devel: cmg_cmd="/opt/httpd_configmap_generator/bin/httpd_configmap_generator"
+  cmg_cmd="httpd_configmap_generator"
   echo -e "\n  # Invoking $cmg_cmd ipa on $cmg_pod ..."
 
   long_cmd="oc rsh $cmg_pod $cmg_cmd ipa "
