@@ -47,5 +47,5 @@ oc_logout
 oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
 new_project "${project_name}" "${project_description}" "${project_displayname}"
 set_project "${project_name}"
-setup_the_httpd-cmg_service_account "${project_name}" "${git_repo}" "${git_branch}"
-deploy_cmg "${git_repo}" "${git_branch}"
+setup_the_httpd-cmg_service_account "${project_name}" "${repo}" "${branch}"
+deploy_cmg "${repo}" "${branch}"

@@ -39,13 +39,13 @@ setup_the_miq-httpd_service_account() {
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
   project_name="$1"
-  git_repo="$2"
-  git_branch="$3"
+  repo="$2"
+  branch="$3"
 
   echo -e "\n  # Create the miq-sysadmin SCC and add the miq-httpd service account to it."
 
   if [[ $minishift == true ]]; then
-    run_cmd "oc create -f https://raw.githubusercontent.com/${git_repo}/manageiq-pods/${git_branch}/templates/miq-scc-sysadmin.yaml"
+    run_cmd "oc create -f https://raw.githubusercontent.com/${repo}/manageiq-pods/${branch}/templates/miq-scc-sysadmin.yaml"
     scc="miq-sysadmin"
   else
     scc="anyuid"
@@ -76,11 +76,11 @@ deploy_miq() {
   if [[ $# -ne 2 ]]; then
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
-  git_repo="$1"
-  git_branch="$2"
+  repo="$1"
+  branch="$2"
 
   echo -e "\n  # Create the MIQ template for deployment and verify it is now available in your project"
-  run_cmd "oc create -f https://raw.githubusercontent.com/ManageIQ/manageiq-pods/master/templates/miq-template.yaml"
+  run_cmd "oc create -f https://raw.githubusercontent.com/${repo}/manageiq-pods/${branch}/templates/miq-template.yaml"
   run_cmd "oc new-app --template=manageiq"
 }
 
@@ -93,7 +93,7 @@ new_project "${project_name}" "${project_description}" "${project_displayname}"
 set_project "${project_name}"
 add_service_accounts_to_anyuid_scc "${project_name}"
 add_privileged_service_accounts_to_privileged_scc "${project_name}"
-setup_the_miq-httpd_service_account "${project_name}" "${git_repo}" "${git_branch}"
+setup_the_miq-httpd_service_account "${project_name}" "${repo}" "${branch}"
 create_db_pv "${project_name}"
-deploy_miq "${git_repo}" "${git_branch}"
+deploy_miq "${repo}" "${branch}"
 
