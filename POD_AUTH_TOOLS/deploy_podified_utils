@@ -63,3 +63,27 @@ set_project() {
   fi
 }
 
+set_release_variables () {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  if [[ $# -ne 4 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  release="$1"
+  project="$2"
+  repo="$3"
+  branch="$4"
+
+  if [[ $release == "cfme" ]]; then
+    template_name="cloudforms"
+    templates="http://file.cloudforms.lab.eng.rdu2.redhat.com/builds/cfme/5.9/stable/openshift-pods/templates"
+  else
+    template_name="manageiq"
+    templates="https://raw.githubusercontent.com/${repo}/${project}/${branch}/templates"
+  fi
+
+  echo "release              ->${release}<-"                                                
+  echo "template_name        ->${template_name}<-"                                                
+  echo "templates            ->${templates}<-"                                                
+}
+

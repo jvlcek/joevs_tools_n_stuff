@@ -7,7 +7,7 @@ usage() {
   echo "Usage: ${this_script} [options]"
 
   echo "${this_script} \\"
-  echo "  -h <MiQ Host> \\"
+  echo "  -h <Manager Host> \\"
   echo "  -s <directory server> \\"
   echo "  -d <domain> \\"
   echo "  -r <real> \\"
@@ -17,7 +17,7 @@ usage() {
   echo ""
 
   echo "Required switches:"
-  echo "  -h <MiQ Host> \\"
+  echo "  -h <Manager Host> \\"
   echo "  -s <directory server> \\"
   echo "  -d <domain> \\"
   echo "  -r <real> \\"
@@ -31,7 +31,7 @@ usage() {
 
   echo "Example usage:"
   echo "${this_script} \\"
-  echo "  -h miq-pod.example.com \\"
+  echo "  -h mgr-pod.example.com \\"
   echo "  -s domain-server.example.com \\"
   echo "  -d example.com \\"
   echo "  -r EXAMPLE.COM \\"
@@ -48,7 +48,7 @@ parse_cmg_args() {
   while getopts "h:s:d:r:u:p:t" opt; do
     case $opt in
     h)
-      miq_host=$OPTARG
+      mgr_host=$OPTARG
       ;;
     s)
       server=$OPTARG
@@ -81,9 +81,9 @@ parse_cmg_args() {
     esac
   done
 
-  if [ -z $miq_host ]; then
+  if [ -z $mgr_host ]; then
     usage
-    error_exit "${FUNCNAME} Missing *REQUIRED* field: -h <MiQ Host>"
+    error_exit "${FUNCNAME} Missing *REQUIRED* field: -h <Manager Host>"
   fi
 
   if [ -z $server ]; then
@@ -111,7 +111,7 @@ parse_cmg_args() {
     error_exit "${FUNCNAME} Missing *REQUIRED* field: -p <principal user password>"
   fi
 
-    echo "miq_host                ->${miq_host}<-"
+    echo "mgr_host                ->${mgr_host}<-"
     echo "server                  ->${server}<-"
     echo "domain                  ->${domain}<-"
     echo "realm                   ->${realm}<-"

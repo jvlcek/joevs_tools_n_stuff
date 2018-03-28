@@ -25,7 +25,7 @@ generate_configmap() {
 
   long_cmd="oc rsh $cmg_pod $cmg_cmd ipa "
   long_cmd+="--force "
-  long_cmd+="--host=${miq_host} "
+  long_cmd+="--host=${mgr_host} "
   long_cmd+="--${server} "
   long_cmd+="--ipa-domain=${domain} "
   long_cmd+="--ipa-realm=${realm} "
