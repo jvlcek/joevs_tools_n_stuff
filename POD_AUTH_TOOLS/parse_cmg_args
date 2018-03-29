@@ -7,7 +7,12 @@ usage() {
   echo "Usage: ${this_script} [options]"
 
   echo "${this_script} \\"
-  echo "  -h <Manager Host> \\"
+  echo "  -h <OpenShift Host> \\"
+  echo "  -p <OpenShift Port> \\"
+  echo "  -u <OpenShift User> \\"
+  echo "  -P <Project Name> \\"
+
+
   echo "  -s <directory server> \\"
   echo "  -d <domain> \\"
   echo "  -r <real> \\"
@@ -44,8 +49,9 @@ parse_cmg_args() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
   trial_run=false
+  release="miq"
 
-  while getopts "h:s:d:r:u:p:t" opt; do
+  while getopts "h:s:d:r:u:p:tR:" opt; do
     case $opt in
     h)
       mgr_host=$OPTARG
@@ -67,6 +73,9 @@ parse_cmg_args() {
       ;;
     t)
       trial_run=true
+      ;;
+    R)
+      release=$OPTARG
       ;;
     ?)
       echo "*** ? ***"
@@ -111,12 +120,21 @@ parse_cmg_args() {
     error_exit "${FUNCNAME} Missing *REQUIRED* field: -p <principal user password>"
   fi
 
-    echo "mgr_host                ->${mgr_host}<-"
-    echo "server                  ->${server}<-"
-    echo "domain                  ->${domain}<-"
-    echo "realm                   ->${realm}<-"
-    echo "principal_user          ->${principal_user}<-"
-    echo "principal_user_password ->${principal_user_password}<-"
-    echo "trial_run               ->${trial_run}<-"
+  if [[ $release != "cfme" ]] && [[ $release != "miq" ]]; then
+    echo "Invalied value:"
+    echo "  -R <release name> must be miq or cfme \\"
+    echo ""
+    usage
+    exit 1
+  fi
+
+  echo "mgr_host                ->${mgr_host}<-"
+  echo "server                  ->${server}<-"
+  echo "domain                  ->${domain}<-"
+  echo "realm                   ->${realm}<-"
+  echo "principal_user          ->${principal_user}<-"
+  echo "principal_user_password ->${principal_user_password}<-"
+  echo "release                 ->${release}<-"
+  echo "trial_run               ->${trial_run}<-"
 }
 

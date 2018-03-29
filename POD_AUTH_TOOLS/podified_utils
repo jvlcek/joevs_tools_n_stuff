@@ -63,7 +63,7 @@ set_project() {
   fi
 }
 
-set_release_variables () {
+set_release_context () {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
   if [[ $# -ne 4 ]]; then

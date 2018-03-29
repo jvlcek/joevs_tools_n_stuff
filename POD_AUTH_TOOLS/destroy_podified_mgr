@@ -3,7 +3,7 @@
 script_path=${0%/*}
 if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
 . "$script_path/parse_podify_args"
-. "$script_path/deploy_podified_utils"
+. "$script_path/podified_utils"
 
 scale_down_dcs() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
@@ -60,7 +60,7 @@ delete_project() {
 }
 
 parse_podify_args "$@"
-set_release_variables "${release}" "manageiq-pods" "${repo}" "${branch}"
+set_release_context "${release}" "manageiq-pods" "${repo}" "${branch}"
 oc_logout
 oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
 set_project "${project_name}"

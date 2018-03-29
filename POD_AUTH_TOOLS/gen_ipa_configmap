@@ -2,7 +2,7 @@
 script_path=${0%/*}
 if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
 . "$script_path/parse_cmg_args"
-. "$script_path/deploy_podified_utils"
+. "$script_path/podified_utils"
 . "$script_path/cmd_line_utils"
 
 set_cmg_pod() {
@@ -23,16 +23,16 @@ generate_configmap() {
   cmg_cmd="httpd_configmap_generator"
   echo -e "\n  # Invoking $cmg_cmd ipa on $cmg_pod ..."
 
-  long_cmd="oc rsh $cmg_pod $cmg_cmd ipa "
+  long_cmd="oc exec $cmg_pod -- bash -c '$cmg_cmd ipa "
   long_cmd+="--force "
   long_cmd+="--host=${mgr_host} "
-  long_cmd+="--${server} "
+  long_cmd+="--ipa-server=${server} "
   long_cmd+="--ipa-domain=${domain} "
   long_cmd+="--ipa-realm=${realm} "
   long_cmd+="--ipa-principal=${principal_user} "
   long_cmd+="--ipa-password=${principal_user_password} "
   long_cmd+="--debug "
-  long_cmd+="-o /tmp/external-ipa.yaml "
+  long_cmd+="-o /tmp/external-ipa.yaml '"
 
   run_cmd "${long_cmd}"
   if [[ $run_cmd_status -ne 0 ]]; then
@@ -55,5 +55,5 @@ set_cmg_pod
 generate_configmap
 fecth_configmap
 
-scale_down_cmg
+# JJV scale_down_cmg
 
