@@ -3,21 +3,19 @@
 script_path=${0%/*}
 if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
 . "$script_path/parse_podify_args"
-. "$script_path/deploy_podified_utils"
+. "$script_path/podified_utils"
 
 setup_the_httpd-cmg_service_account() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  if [[ $# -ne 3 ]]; then
+  if [[ $# -ne 2 ]]; then
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
   project_name="$1"
-  repo="$2"
-  branch="$3"
+  templates="$2"
 
   echo -e "\n  # Create the httpd-scc-sysadmin SCC"
-  run_cmd "oc create -f " \
-          "https://raw.githubusercontent.com/${repo}/httpd_configmap_generator/${branch}/templates/httpd-scc-sysadmin.yaml"
+  run_cmd "oc create -f ${templates}/httpd-scc-sysadmin.yaml"
 
   echo -e "\n  # Include the httpd-configmap-generator service account with the new SCC"
   run_cmd "oc adm policy add-scc-to-user httpd-scc-sysadmin system:serviceaccount:${project_name}:httpd-configmap-generator"
@@ -27,25 +25,22 @@ setup_the_httpd-cmg_service_account() {
 deploy_cmg() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  if [[ $# -ne 2 ]]; then
+  if [[ $# -ne 1 ]]; then
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
-  repo="$1"
-  branch="$2"
+  templates="$1"
 
   echo -e "\n  # Deploy the Httpd Configmap Generator Application"
 
-  long_template_url="https://raw.githubusercontent.com/${repo}/httpd_configmap_generator/"
-  long_template_url+="${branch}/templates/httpd-configmap-generator-template.yaml"
-
-  run_cmd "oc create -f ${long_template_url}"
+  run_cmd "oc create -f ${templates}/httpd-configmap-generator-template.yaml"
   run_cmd "oc new-app --template=httpd-configmap-generator"
 }
   
 parse_podify_args "$@"
+set_release_context "${release}" "httpd_configmap_generator" "${repo}" "${branch}"
 oc_logout
 oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
 new_project "${project_name}" "${project_description}" "${project_displayname}"
 set_project "${project_name}"
-setup_the_httpd-cmg_service_account "${project_name}" "${git_repo}" "${git_branch}"
-deploy_cmg "${git_repo}" "${git_branch}"
+setup_the_httpd-cmg_service_account "${project_name}" "${templates}"
+deploy_cmg "${templates}"

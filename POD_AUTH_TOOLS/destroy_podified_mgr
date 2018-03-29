@@ -3,14 +3,23 @@
 script_path=${0%/*}
 if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
 . "$script_path/parse_podify_args"
-. "$script_path/deploy_podified_utils"
+. "$script_path/podified_utils"
 
-scale_down_pods() {
+scale_down_dcs() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  echo -e "\n  # Scale all pods to 0"
-  for i in $(run_cmd "oc get dc" | cut -d " " -f 1 | grep -v NAME); do
+  echo -e "\n  # Scale all deploymentconfigs to 0"
+  for i in $(run_cmd "oc get dc -o name" | cut -d '/' -f 2 | grep -v "  oc"); do
     run_cmd "oc scale dc $i --replicas=0"
+  done
+}
+
+scale_down_statefulset() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  echo -e "\n  # Scale all statefulset to 0"
+  for i in $(run_cmd "oc get statefulsets -o name" | cut -d '/' -f 2 | grep -v "  oc"); do
+    run_cmd "oc scale statefulsets $i --replicas=0"
   done
 }
 
@@ -29,8 +38,13 @@ wait_for_pod_scale_down() {
 delete_application() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
+  if [[ $# -ne 1 ]]; then
+    error_exit "${FUNCNAME} invoked with wrong number of arguments"
+  fi
+  template_name="$1"
+
   echo -e "\n  # Delete the application"
-  run_cmd "oc delete all -l app=manageiq"
+  run_cmd "oc delete all -l app=${template_name}"
 }
 
 delete_project() {
@@ -41,18 +55,18 @@ delete_project() {
   fi
   project_name="$1"
 
-
   echo -e "\n  # Delete the project"
   run_cmd "oc delete project ${project_name}"
 }
 
 parse_podify_args "$@"
+set_release_context "${release}" "manageiq-pods" "${repo}" "${branch}"
 oc_logout
 oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
 set_project "${project_name}"
-scale_down_pods
+scale_down_dcs
+scale_down_statefulset
 wait_for_pod_scale_down
-delete_application
+delete_application "${template_name}"
 delete_project "${project_name}"
-
 

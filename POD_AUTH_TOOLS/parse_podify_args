@@ -24,6 +24,7 @@ usage() {
 
   echo "Optional switches:"
   echo "  -t                        [false]    trial_run flag \\"
+  echo "  -R                        [manageiq] cloudforms || manageiq \\"
   echo "  -m                        [false]    minishift flag \\"
   echo "  -r <git repo>             [ManageIQ] \\"
   echo "  -b <git branch>           [master] \\"
@@ -37,8 +38,8 @@ usage() {
   echo "  -p 8443 \\"
   echo "  -u bob \\"
   echo "  -P my-project \\"
-  echo "  -d \"ManageIQ Project Example\" \\"
-  echo "  -D \"ManageIQ Project\""
+  echo "  -d \"My Project Example\" \\"
+  echo "  -D \"My Project\""
   echo ""
 }
 
@@ -46,13 +47,14 @@ parse_podify_args() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
   trial_run=false
+  release="miq"
   minishift=false
-  git_repo="ManageIQ"
-  git_branch="master"
+  repo="ManageIQ"
+  branch="master"
   project_description=""
   project_displayname=""
 
-  while getopts "h:p:u:P:d:D:tmr:b:" opt; do
+  while getopts "h:p:u:P:d:D:tR:mr:b:" opt; do
     case $opt in
     h)
       openshift_host=$OPTARG
@@ -75,14 +77,17 @@ parse_podify_args() {
     t)
       trial_run=true
       ;;
+    R)
+      release=$OPTARG
+      ;;
     m)
       minishift=true
       ;;
     r)
-      git_repo=$OPTARG
+      repo=$OPTARG
       ;;
     b)
-      git_branch=$OPTARG
+      branch=$OPTARG
       ;;
     ?)
       echo "*** ? ***"
@@ -97,7 +102,7 @@ parse_podify_args() {
     esac
   done
 
-  if [ -z $openshift_host ]; then
+  if [[ -z $openshift_host ]]; then
     echo "Missing *REQUIRED* field:"
     echo "  -h <OpenShift Host> *REQUIRED* Openshift Host Name \\"
     echo ""
@@ -105,7 +110,7 @@ parse_podify_args() {
     exit 1
   fi
 
-  if [ -z $openshift_port ]; then
+  if [[ -z $openshift_port ]]; then
     echo "Missing *REQUIRED* field:"
     echo "  -p <OpenShift Port> *REQUIRED* Openshift Port Number \\"
     echo ""
@@ -113,7 +118,7 @@ parse_podify_args() {
     exit 1
   fi
 
-  if [ -z $openshift_user ]; then
+  if [[ -z $openshift_user ]]; then
     echo "Missing *REQUIRED* field:"
     echo "  -u <OpenShift User> *REQUIRED* Openshift User Name \\"
     echo ""
@@ -121,7 +126,7 @@ parse_podify_args() {
     exit 1
   fi
 
-  if [ -z $project_name ]; then
+  if [[ -z $project_name ]]; then
     echo "Missing *REQUIRED* field:"
     echo "  -P <Project Name>   *REQUIRED* Openshift Project Name \\"
     echo ""
@@ -129,15 +134,24 @@ parse_podify_args() {
     exit 1
   fi
 
-    echo "openshift_host       ->${openshift_host}<-"
-    echo "openshift_port       ->${openshift_port}<-"
-    echo "openshift_user       ->${openshift_user}<-"
-    echo "project_name         ->${project_name}<-"
-    echo "project_description  ->${project_description}<-"
-    echo "project_displayname  ->${project_displayname}<-"
-    echo "trial_run            ->${trial_run}<-"
-    echo "minishift            ->${minishift}<-"
-    echo "git_repo             ->${git_repo}<-"
-    echo "git_branch           ->${git_branch}<-"
+  if [[ $release != "cfme" ]] && [[ $release != "miq" ]]; then
+    echo "Invalied value:"
+    echo "  -R <release name> must be miq or cfme \\"
+    echo ""
+    usage
+    exit 1
+  fi
+
+  echo "openshift_host       ->${openshift_host}<-"
+  echo "openshift_port       ->${openshift_port}<-"
+  echo "openshift_user       ->${openshift_user}<-"
+  echo "project_name         ->${project_name}<-"
+  echo "project_description  ->${project_description}<-"
+  echo "project_displayname  ->${project_displayname}<-"
+  echo "release              ->${release}<-"
+  echo "minishift            ->${minishift}<-"
+  echo "repo                 ->${repo}<-"
+  echo "branch               ->${branch}<-"
+  echo "trial_run            ->${trial_run}<-"
 }
 
