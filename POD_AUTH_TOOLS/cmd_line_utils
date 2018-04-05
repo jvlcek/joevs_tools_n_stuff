@@ -21,24 +21,83 @@
 #
 
 
+# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
+# Common pod commands
+# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
+pod_scale_up() {
+  pod_name=$1
+  oc scale dc ${pod_name} --replicas=1
+}
+
+pod_scale_down() {
+  pod_name=$1
+  oc scale dc ${pod_name} --replicas=0
+}
+
+pod_scale_wait() {
+  pod_name=$1
+
+  counter=0
+  while [[ $( eval "${pod_name}_pod" | wc -l ) -ne 0 ]] &&
+        [[ ${counter} -lt 20 ]]; do
+    counter=$((counter+1))
+    echo "  ${counter} scale down wait ${pod_name}"
+    sleep 2
+  done
+  echo "Done"
+}
+
+pod_restart() {
+  pod_name=$1
+  pod_scale_down ${pod_name}
+  pod_scale_wait ${pod_name}
+  pod_scale_up   ${pod_name}
+}
+
+# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
+# httpd pod commands
+# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
 httpd_pod() {
   oc get pods | egrep "httpd-[1-9]" | cut -f1 -d" "
 }
 
-cmg_pod() {
-  oc get pods | grep "httpd-configmap-generator" | cut -f1 -d" "
+httpd_pod_update_cm() {
+  if [[ -f external-ipa.yaml ]]; then
+    oc replace configmaps httpd-auth-configs --filename ./external-ipa.yaml
+  else
+    echo "ERROR: ./external-ipa.yaml not found"
+  fi
+}
+
+httpd_pod_restart() {
+  pod_restart "httpd"
 }
 
 httpd_pod_status() {
   oc get pods | egrep "httpd-[1-9]" | sed s/" [[:space:]]*"/" "/g  | cut -f 3 -d " "
 }
 
-cmg_pod_status() {
-  oc get pods | grep "httpd-configmap-generator" | sed s/" [[:space:]]*"/" "/g  | cut -f 3 -d " "
-}
-
 ssh2httpd() {
   oc rsh `httpd_pod` bash -i
+}
+
+# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
+# httpd-configmap-generator (cmg) pod commands
+# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
+httpd-configmap-generator_pod() {
+  oc get pods | grep "httpd-configmap-generator" | cut -f1 -d" "
+}
+
+cmg_pod() {
+  oc get pods | grep "httpd-configmap-generator" | cut -f1 -d" "
+}
+
+cmg_pod_restart() {
+  pod_restart "httpd-configmap-generator"
+}
+
+cmg_pod_status() {
+  oc get pods | grep "httpd-configmap-generator" | sed s/" [[:space:]]*"/" "/g  | cut -f 3 -d " "
 }
 
 ssh2cmg() {
