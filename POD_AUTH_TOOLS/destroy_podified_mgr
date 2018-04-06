@@ -26,13 +26,16 @@ scale_down_statefulset() {
 wait_for_pod_scale_down() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
+  counter=0
+
   echo -e "\n  # wait for all pods to scale to 0"
-  while [[ $( run_cmd "oc get pods" | grep -v "Error" | grep -v "oc get pods" | wc -l ) -ne 0 ]]; do
-    echo "Pods still running"
+  while [[ $( run_cmd "oc get pods" | grep -v "Error" | grep -v "oc get pods" | wc -l ) -ne 0 ]] &&
+        [[ ${counter} -lt 20 ]]; do
+    counter=$((counter+1))
+    echo "Pods still running ${counter}"
     sleep 10
   done
   echo "Done"
-
 }
 
 delete_application() {
