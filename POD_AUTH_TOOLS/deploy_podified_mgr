@@ -75,16 +75,22 @@ create_db_pv() {
 deploy_mgr() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  if [[ $# -ne 3 ]]; then
+  if [[ $# -ne 4 ]]; then
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
   template_name="$1"
   release="$2"
   templates="$3"
+  application_domain="$4"
 
   echo -e "\n  # Create the template for deployment and verify it is now available in your project"
   run_cmd "oc create -f ${templates}/${release}-template.yaml"
-  run_cmd "oc new-app --template=${template_name}"
+
+  if [[ "${application_domain}" == "" ]]; then
+    run_cmd "oc new-app --template=${template_name}"
+  else
+    run_cmd "oc new-app --template=${template_name} -p APPLICATION_DOMAIN=${application_domain}"
+  fi
 }
 
 parse_podify_args "$@"
@@ -97,4 +103,4 @@ add_service_accounts_to_anyuid_scc "${project_name}" "${release}"
 add_privileged_service_accounts_to_privileged_scc "${project_name}" "${release}"
 setup_the_httpd_service_account "${project_name}" "${release}" "${templates}"
 create_db_pv "${project_name}"
-deploy_mgr "${template_name}" "${release}" "${templates}" 
+deploy_mgr "${template_name}" "${release}" "${templates}" "${application_domain}"

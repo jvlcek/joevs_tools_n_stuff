@@ -6,23 +6,14 @@ usage() {
   # Optional
   echo "Usage: ${this_script} [options]"
 
-  echo "${this_script} \\"
-  echo "  -h <OpenShift Host> \\"
-  echo "  -p <OpenShift Port> \\"
-  echo "  -u <OpenShift User> \\"
-  echo "  -P <Project Name> \\"
-  echo "  -d <Project Description> \\"
-  echo "  -D <Project Display>"
-  echo ""
-
-  echo "Required switches:"
+  echo "Required options:"
   echo "  -h <OpenShift Host> \\"
   echo "  -p <OpenShift Port> \\"
   echo "  -u <OpenShift User> \\"
   echo "  -P <Project Name> \\"
   echo ""
 
-  echo "Optional switches:"
+  echo "Optional options:"
   echo "  -t                        [false]    trial_run flag \\"
   echo "  -R                        [manageiq] cloudforms || manageiq \\"
   echo "  -m                        [false]    minishift flag \\"
@@ -30,6 +21,7 @@ usage() {
   echo "  -b <git branch>           [master] \\"
   echo "  -d <Project Description>  [none] \\"
   echo "  -D <Project Display>      [none] \\"
+  echo "  -a <application domain>   [none] \\"
   echo ""
 
   echo "Example usage:"
@@ -46,15 +38,16 @@ usage() {
 parse_podify_args() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  trial_run=false
-  release="miq"
-  minishift=false
-  repo="ManageIQ"
+  application_domain=""
   branch="master"
+  minishift=false
   project_description=""
   project_displayname=""
+  release="miq"
+  repo="ManageIQ"
+  trial_run=false
 
-  while getopts "h:p:u:P:d:D:tR:mr:b:" opt; do
+  while getopts "h:p:u:P:d:D:a:tR:mr:b:" opt; do
     case $opt in
     h)
       openshift_host=$OPTARG
@@ -73,6 +66,9 @@ parse_podify_args() {
       ;;
     D)
       project_displayname=$OPTARG
+      ;;
+    a)
+      application_domain=$OPTARG
       ;;
     t)
       trial_run=true
@@ -148,6 +144,7 @@ parse_podify_args() {
   echo "project_name         ->${project_name}<-"
   echo "project_description  ->${project_description}<-"
   echo "project_displayname  ->${project_displayname}<-"
+  echo "application_domain   ->${application_domain}<-"
   echo "release              ->${release}<-"
   echo "minishift            ->${minishift}<-"
   echo "repo                 ->${repo}<-"
