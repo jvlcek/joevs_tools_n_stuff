@@ -12,11 +12,11 @@ add_service_accounts_to_anyuid_scc() {
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
   project_name="$1"
-  release="$2"
+  template_name="$2"
 
-  echo -e "\n  # Add the ${release}-anyuid and ${release}-orchestrator service accounts to the anyuid Security Context Constraints (SCC)"
-  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:${release}-anyuid"
-  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:${release}-orchestrator"
+  echo -e "\n  # Add the ${template_name}-anyuid and ${template_name}-orchestrator service accounts to the anyuid Security Context Constraints (SCC)"
+  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:${template_name}-anyuid"
+  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:${template_name}-orchestrator"
   run_cmd "oc describe scc anyuid | grep Users"
 }
 
@@ -27,10 +27,10 @@ add_privileged_service_accounts_to_privileged_scc() {
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
   project_name="$1"
-  release="$2"
+  template_name="$2"
 
-  echo -e "\n  # Add the ${release}-privileged service account to the privileged Security Context Constraints (SCC)"
-  run_cmd "oc adm policy add-scc-to-user privileged system:serviceaccount:${project_name}:${release}-privileged"
+  echo -e "\n  # Add the ${template_name}-privileged service account to the privileged Security Context Constraints (SCC)"
+  run_cmd "oc adm policy add-scc-to-user privileged system:serviceaccount:${project_name}:${template_name}-privileged"
   run_cmd "oc describe scc privileged | grep Users"
 }
 
@@ -41,19 +41,19 @@ setup_the_httpd_service_account() {
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
   project_name="$1"
-  release="$2"
+  template_name="$2"
   templates="$3"
 
-  echo -e "\n  # Create the ${release}-sysadmin SCC and add the ${release}-httpd service account to it."
+  echo -e "\n  # Create the ${template_name}-sysadmin SCC and add the ${template_name}-httpd service account to it."
 
   if [[ $minishift == true ]]; then
-    run_cmd "oc create -f ${templates}/${release}-scc-sysadmin.yaml"
-    scc="${release}-sysadmin"
+    run_cmd "oc create -f ${templates}/${template_name}-scc-sysadmin.yaml"
+    scc="${template_name}-sysadmin"
   else
     scc="anyuid"
   fi
 
-  run_cmd "oc adm policy add-scc-to-user ${scc} system:serviceaccount:${project_name}:${release}-httpd"
+  run_cmd "oc adm policy add-scc-to-user ${scc} system:serviceaccount:${project_name}:${template_name}-httpd"
   run_cmd "oc describe scc ${scc} | grep Users"
 }
 
@@ -79,12 +79,12 @@ deploy_mgr() {
     error_exit "${FUNCNAME} invoked with wrong number of arguments"
   fi
   template_name="$1"
-  release="$2"
+  template_name="$2"
   templates="$3"
   application_domain="$4"
 
   echo -e "\n  # Create the template for deployment and verify it is now available in your project"
-  run_cmd "oc create -f ${templates}/${release}-template.yaml"
+  run_cmd "oc create -f ${templates}/${template_name}-template.yaml"
 
   if [[ "${application_domain}" == "" ]]; then
     run_cmd "oc new-app --template=${template_name}"
@@ -94,13 +94,12 @@ deploy_mgr() {
 }
 
 parse_podify_args "$@"
-set_release_context "${release}" "manageiq-pods" "${repo}" "${branch}"
 oc_logout
 oc_login "${openshift_host}" "${openshift_port}" "${openshift_user}"
 new_project "${project_name}" "${project_description}" "${project_displayname}"
 set_project "${project_name}"
-add_service_accounts_to_anyuid_scc "${project_name}" "${release}"
-add_privileged_service_accounts_to_privileged_scc "${project_name}" "${release}"
-setup_the_httpd_service_account "${project_name}" "${release}" "${templates}"
+add_service_accounts_to_anyuid_scc "${project_name}" "${template_name}"
+add_privileged_service_accounts_to_privileged_scc "${project_name}" "${template_name}"
+setup_the_httpd_service_account "${project_name}" "${template_name}" "${templates}"
 create_db_pv "${project_name}"
-deploy_mgr "${template_name}" "${release}" "${templates}" "${application_domain}"
+deploy_mgr "${template_name}" "${template_name}" "${templates}" "${application_domain}"

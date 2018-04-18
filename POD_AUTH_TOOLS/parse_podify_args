@@ -15,10 +15,9 @@ usage() {
 
   echo "Optional options:"
   echo "  -t                        [false]    trial_run flag \\"
-  echo "  -R                        [manageiq] cloudforms || manageiq \\"
   echo "  -m                        [false]    minishift flag \\"
-  echo "  -r <git repo>             [ManageIQ] \\"
-  echo "  -b <git branch>           [master] \\"
+  echo "  -N                        [manageiq] cloudforms || manageiq \\"
+  echo "  -T <templet URL>          [https://raw.githubusercontent.com/ManageIQ/manageiq-pods/master/templates] \\"
   echo "  -d <Project Description>  [none] \\"
   echo "  -D <Project Display>      [none] \\"
   echo "  -a <application domain>   [none] \\"
@@ -39,15 +38,14 @@ parse_podify_args() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
   application_domain=""
-  branch="master"
   minishift=false
   project_description=""
   project_displayname=""
-  release="miq"
-  repo="ManageIQ"
+  template_name="manageiq"
+  templates="https://raw.githubusercontent.com/ManageIQ/manageiq-pods/master/templates"
   trial_run=false
 
-  while getopts "h:p:u:P:d:D:a:tR:mr:b:" opt; do
+  while getopts "h:p:u:P:d:D:a:tN:T:m" opt; do
     case $opt in
     h)
       openshift_host=$OPTARG
@@ -73,17 +71,14 @@ parse_podify_args() {
     t)
       trial_run=true
       ;;
-    R)
-      release=$OPTARG
+    N)
+      template_name=$OPTARG
+      ;;
+    T)
+      templates=$OPTARG
       ;;
     m)
       minishift=true
-      ;;
-    r)
-      repo=$OPTARG
-      ;;
-    b)
-      branch=$OPTARG
       ;;
     ?)
       echo "*** ? ***"
@@ -130,9 +125,9 @@ parse_podify_args() {
     exit 1
   fi
 
-  if [[ $release != "cfme" ]] && [[ $release != "miq" ]]; then
+  if [[ $template_name != "cloudforms" ]] && [[ $template_name != "manageiq" ]]; then
     echo "Invalied value:"
-    echo "  -R <release name> must be miq or cfme \\"
+    echo "  -N <template name> must be manageiq or cloudforms \\"
     echo ""
     usage
     exit 1
@@ -145,10 +140,9 @@ parse_podify_args() {
   echo "project_description  ->${project_description}<-"
   echo "project_displayname  ->${project_displayname}<-"
   echo "application_domain   ->${application_domain}<-"
-  echo "release              ->${release}<-"
+  echo "template_name        ->${template_name}<-"
+  echo "templates             ->${template}<-"
   echo "minishift            ->${minishift}<-"
-  echo "repo                 ->${repo}<-"
-  echo "branch               ->${branch}<-"
   echo "trial_run            ->${trial_run}<-"
 }
 

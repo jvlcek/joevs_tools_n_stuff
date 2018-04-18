@@ -8,7 +8,12 @@ if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
 set_cmg_pod() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  cmg_pod=`cmg_pod`
+  if [[ $trial_run == false ]]; then
+    cmg_pod=`cmg_pod`
+  else
+    cmg_pod="CMG_POD_TRIAL_RUN"
+  fi
+
   if [[ -z "$cmg_pod" ]]; then
     error_exit "${FUNCNAME} Configmap Generator Pod is not running"
   fi
