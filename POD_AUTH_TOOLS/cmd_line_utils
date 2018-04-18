@@ -25,16 +25,22 @@
 # Common pod commands
 # +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
 pod_scale_up() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
   pod_name=$1
   oc scale dc ${pod_name} --replicas=1
 }
 
 pod_scale_down() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
   pod_name=$1
   oc scale dc ${pod_name} --replicas=0
 }
 
-pod_scale_wait() {
+pod_scale_down_wait() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
   pod_name=$1
 
   counter=0
@@ -47,11 +53,29 @@ pod_scale_wait() {
   echo "Done"
 }
 
-pod_restart() {
+pod_scale_up_wait() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
   pod_name=$1
-  pod_scale_down ${pod_name}
-  pod_scale_wait ${pod_name}
-  pod_scale_up   ${pod_name}
+
+  counter=0
+  while [[ $( eval "${pod_name}_pod_status" ) != "Running" ]] &&
+        [[ ${counter} -lt 20 ]]; do
+    counter=$((counter+1))
+    echo "  ${counter} scale up wait ${pod_name}"
+    sleep 2
+  done
+  echo "Done"
+}
+
+pod_restart() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  pod_name=$1
+  pod_scale_down      ${pod_name}
+  pod_scale_down_wait ${pod_name}
+  pod_scale_up        ${pod_name}
+  pod_scale_up_wait   ${pod_name}
 }
 
 # +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
@@ -96,11 +120,23 @@ cmg_pod_restart() {
   pod_restart "httpd-configmap-generator"
 }
 
+httpd-configmap-generator_pod_status() {
+  oc get pods | grep "httpd-configmap-generator" | sed s/" [[:space:]]*"/" "/g  | cut -f 3 -d " "
+}
+
 cmg_pod_status() {
   oc get pods | grep "httpd-configmap-generator" | sed s/" [[:space:]]*"/" "/g  | cut -f 3 -d " "
 }
 
 ssh2cmg() {
   oc rsh `cmg_pod` bash -i
+}
+
+# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
+# Mmanager (CFME, cloudforms, MiQ, manageiq) commands
+# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=
+
+tail_logs() {
+  oc logs -f cloudforms-0
 }
 

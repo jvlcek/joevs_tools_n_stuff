@@ -6,28 +6,13 @@ usage() {
   # Optional
   echo "Usage: ${this_script} [options]"
 
-  echo "${this_script} \\"
-  echo "  -h <OpenShift Host> \\"
-  echo "  -p <OpenShift Port> \\"
-  echo "  -u <OpenShift User> \\"
-  echo "  -P <Project Name> \\"
-
-
-  echo "  -s <directory server> \\"
-  echo "  -d <domain> \\"
-  echo "  -r <real> \\"
-  echo "  -u <principal user> \\"
-  echo "  -p <principal user password> \\"
-  echo "  -t [false] trial_run flag \\"
-  echo ""
-
   echo "Required switches:"
   echo "  -h <Manager Host> \\"
   echo "  -s <directory server> \\"
   echo "  -d <domain> \\"
   echo "  -r <real> \\"
-  echo "  -u <principal user> \\"
-  echo "  -p <principal user password> \\"
+  echo "  -u <directory server principal user> \\"
+  echo "  -p <directory server principal user password> \\"
   echo ""
 
   echo "Optional switches:"
@@ -112,12 +97,12 @@ parse_cmg_args() {
 
   if [ -z $principal_user ]; then
     usage
-    error_exit "${FUNCNAME} Missing -u <principal user>"
+    error_exit "${FUNCNAME} Missing -u <directory server principal user>"
   fi
 
   if [ -z $principal_user_password ]; then
     usage
-    error_exit "${FUNCNAME} Missing *REQUIRED* field: -p <principal user password>"
+    error_exit "${FUNCNAME} Missing *REQUIRED* field: -p <directory server principal user password>"
   fi
 
   if [[ $release != "cfme" ]] && [[ $release != "miq" ]]; then
