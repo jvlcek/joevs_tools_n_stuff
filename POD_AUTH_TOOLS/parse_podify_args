@@ -44,6 +44,7 @@ parse_podify_args() {
   template_name="manageiq"
   templates="https://raw.githubusercontent.com/ManageIQ/manageiq-pods/master/templates"
   trial_run=false
+  release="miq"
 
   while getopts "h:p:u:P:d:D:a:tN:T:m" opt; do
     case $opt in
@@ -133,6 +134,10 @@ parse_podify_args() {
     exit 1
   fi
 
+  if [[ $template_name == "cloudforms" ]]; then
+    release="cfme"
+  fi
+
   echo "openshift_host       ->${openshift_host}<-"
   echo "openshift_port       ->${openshift_port}<-"
   echo "openshift_user       ->${openshift_user}<-"
@@ -141,8 +146,9 @@ parse_podify_args() {
   echo "project_displayname  ->${project_displayname}<-"
   echo "application_domain   ->${application_domain}<-"
   echo "template_name        ->${template_name}<-"
-  echo "templates             ->${template}<-"
+  echo "templates            ->${templates}<-"
   echo "minishift            ->${minishift}<-"
   echo "trial_run            ->${trial_run}<-"
+  echo "release              ->${release}<-"
 }
 
