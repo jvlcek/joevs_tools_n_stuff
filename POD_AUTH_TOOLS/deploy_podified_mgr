@@ -72,7 +72,6 @@ create_db_pv() {
   fi
 }
 
-deploy_mgr "${release}" "${template_name}" "${templates}" "${application_domain}"
 deploy_mgr() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 

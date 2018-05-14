@@ -10,9 +10,10 @@ usage() {
   echo "  -h <Manager Host> \\"
   echo "  -s <directory server> \\"
   echo "  -d <domain> \\"
-  echo "  -r <real> \\"
+  echo "  -r <realm> \\"
   echo "  -u <directory server principal user> \\"
   echo "  -p <directory server principal user password> \\"
+  echo "  -a <AD domain> \\"
   echo ""
 
   echo "Optional switches:"
@@ -36,10 +37,13 @@ parse_cmg_args() {
   trial_run=false
   release="miq"
 
-  while getopts "h:s:d:r:u:p:tR:" opt; do
+  while getopts "h:s:d:r:u:p:tR:a:" opt; do
     case $opt in
     h)
       mgr_host=$OPTARG
+      ;;
+    a)
+      domain=$OPTARG
       ;;
     s)
       server=$OPTARG
@@ -51,10 +55,10 @@ parse_cmg_args() {
       realm=$OPTARG
       ;;
     u)
-      principal_user=$OPTARG
+      user=$OPTARG
       ;;
     p)
-      principal_user_password=$OPTARG
+      user_password=$OPTARG
       ;;
     t)
       trial_run=true
@@ -95,12 +99,12 @@ parse_cmg_args() {
     error_exit "${FUNCNAME} Missing -r <real>"
   fi
 
-  if [ -z $principal_user ]; then
+  if [ -z $user ]; then
     usage
     error_exit "${FUNCNAME} Missing -u <directory server principal user>"
   fi
 
-  if [ -z $principal_user_password ]; then
+  if [ -z $user_password ]; then
     usage
     error_exit "${FUNCNAME} Missing *REQUIRED* field: -p <directory server principal user password>"
   fi
@@ -117,8 +121,8 @@ parse_cmg_args() {
   echo "server                  ->${server}<-"
   echo "domain                  ->${domain}<-"
   echo "realm                   ->${realm}<-"
-  echo "principal_user          ->${principal_user}<-"
-  echo "principal_user_password ->${principal_user_password}<-"
+  echo "user                    ->${user}<-"
+  echo "user_password           ->${user_password}<-"
   echo "release                 ->${release}<-"
   echo "trial_run               ->${trial_run}<-"
 }

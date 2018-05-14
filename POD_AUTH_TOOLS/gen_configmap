@@ -21,7 +21,7 @@ set_cmg_pod() {
   echo -e "\n  # Configmap Generator Pod: ${cmg_pod}"
 }
 
-generate_configmap() {
+generate_ipa_configmap() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
   # Devel: cmg_cmd="/opt/httpd_configmap_generator/bin/httpd_configmap_generator"
@@ -34,10 +34,36 @@ generate_configmap() {
   long_cmd+="--ipa-server=${server} "
   long_cmd+="--ipa-domain=${domain} "
   long_cmd+="--ipa-realm=${realm} "
-  long_cmd+="--ipa-principal=${principal_user} "
-  long_cmd+="--ipa-password=${principal_user_password} "
+  long_cmd+="--ipa-principal=${user} "
+  long_cmd+="--ipa-password=${user_password} "
+
   long_cmd+="--debug "
   long_cmd+="-o /tmp/external-ipa.yaml '"
+
+  run_cmd "${long_cmd}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} Failed to generate the config map"
+  fi
+}
+
+generate_ad_configmap() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  # Devel: cmg_cmd="/opt/httpd_configmap_generator/bin/httpd_configmap_generator"
+  cmg_cmd="httpd_configmap_generator"
+  echo -e "\n  # Invoking $cmg_cmd active-directory on $cmg_pod ..."
+
+  long_cmd="oc exec $cmg_pod -- bash -c '$cmg_cmd active-directory "
+  long_cmd+="--force "
+  long_cmd+="--host=${mgr_host} "
+  long_cmd+="--ad-server=${server} "
+  long_cmd+="--ad-domain=${domain} "
+  long_cmd+="--ad-realm=${realm} "
+  long_cmd+="--ad-user=${user} "
+  long_cmd+="--ad-password=${user_password} "
+
+  long_cmd+="--debug "
+  long_cmd+="-o /tmp/external-active-directory.yaml '"
 
   run_cmd "${long_cmd}"
   if [[ $run_cmd_status -ne 0 ]]; then
@@ -57,7 +83,8 @@ fecth_configmap() {
 
 parse_cmg_args "$@"
 set_cmg_pod
-generate_configmap
+# generate_ipa_configmap
+generate_ad_configmap
 fecth_configmap
 
 # JJV scale_down_cmg
