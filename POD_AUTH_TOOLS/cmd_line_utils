@@ -86,10 +86,10 @@ httpd_pod() {
 }
 
 httpd_pod_update_cm() {
-  if [[ -f external-ipa.yaml ]]; then
-    oc replace configmaps httpd-auth-configs --filename ./external-ipa.yaml
+  if [[ -f external-cm.yaml ]]; then
+    oc replace configmaps httpd-auth-configs --filename ./external-cm.yaml
   else
-    echo "ERROR: ./external-ipa.yaml not found"
+    echo "ERROR: ./external-cm.yaml not found"
   fi
 }
 

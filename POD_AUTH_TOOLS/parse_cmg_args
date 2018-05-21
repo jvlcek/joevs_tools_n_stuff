@@ -94,11 +94,6 @@ parse_cmg_args() {
     error_exit "${FUNCNAME} Missing -d <domain>"
   fi
 
-  if [ -z $realm ]; then
-    usage
-    error_exit "${FUNCNAME} Missing -r <real>"
-  fi
-
   if [ -z $user ]; then
     usage
     error_exit "${FUNCNAME} Missing -u <directory server principal user>"

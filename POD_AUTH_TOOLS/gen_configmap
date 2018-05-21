@@ -21,6 +21,19 @@ set_cmg_pod() {
   echo -e "\n  # Configmap Generator Pod: ${cmg_pod}"
 }
 
+generate_configmap() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  case "$auth_type" in
+    "ipa")
+      generate_ipa_configmap
+      ;;
+    "active_directory")
+      generate_ad_configmap
+      ;;
+  esac
+}
+
 generate_ipa_configmap() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
@@ -38,7 +51,7 @@ generate_ipa_configmap() {
   long_cmd+="--ipa-password=${user_password} "
 
   long_cmd+="--debug "
-  long_cmd+="-o /tmp/external-ipa.yaml '"
+  long_cmd+="-o /tmp/external-cm.yaml '"
 
   run_cmd "${long_cmd}"
   if [[ $run_cmd_status -ne 0 ]]; then
@@ -63,7 +76,7 @@ generate_ad_configmap() {
   long_cmd+="--ad-password=${user_password} "
 
   long_cmd+="--debug "
-  long_cmd+="-o /tmp/external-active-directory.yaml '"
+  long_cmd+="-o /tmp/external-cm.yaml '"
 
   run_cmd "${long_cmd}"
   if [[ $run_cmd_status -ne 0 ]]; then
@@ -74,17 +87,32 @@ generate_ad_configmap() {
 fecth_configmap() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  echo -e "\n  # Fetching external-ipa.yaml"
-  run_cmd "oc cp $cmg_pod:/tmp/external-ipa.yaml ./external-ipa.yaml"
+  echo -e "\n  # Fetching external-cm.yaml"
+  run_cmd "oc cp $cmg_pod:/tmp/external-cm.yaml ./external-cm.yaml"
   if [[ $run_cmd_status -ne 0 ]]; then
     error_exit "${FUNCNAME} Failed to fetch the new config map"
   fi
 }
 
+set_auth_type() {
+  auth_type="$1"
+
+  if [[ $auth_type != "active_directory" ]] && [[ $auth_type != "ipa" ]]; then
+    echo "Invalied value: ${auth_type}"
+    echo "  Supported auth_types are: active_directory and ipa \\"
+    echo ""
+    usage
+    exit 1
+  fi
+
+  echo "auth_type ->${auth_type}<-"
+}
+
+set_auth_type "$@"
+shift
 parse_cmg_args "$@"
 set_cmg_pod
-# generate_ipa_configmap
-generate_ad_configmap
+generate_configmap
 fecth_configmap
 
 # JJV scale_down_cmg
