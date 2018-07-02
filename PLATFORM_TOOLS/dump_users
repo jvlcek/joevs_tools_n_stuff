@@ -24,19 +24,18 @@ class Dump
   end
 
   def run
-    delete_a_user
-    delete_all_users
-    dump_groups
-    dump_group_description_only
-    dump_users
-    dump_userid_only
+    delete_a_user               if opts[:delete_a_user_given]
+    delete_all_users            if opts[:delete_all_users]
+    dump_groups                 if opts[:dump_groups]
+    dump_group_description_only if opts[:dump_group_description_only]
+    dump_users                  if opts[:dump_users]
+    dump_userid_only            if opts[:dump_userid_only]
+    dump_one_user               if opts[:dump_one_user]
   end
 
   private
 
   def dump_groups
-    return unless opts[:dump_groups]
-
     puts "\n--- Groups ---------------------------------"
     MiqGroup.all.map do |u|
       puts "  created_on: #{u[:created_on]}"
@@ -54,8 +53,6 @@ class Dump
   end
 
   def dump_group_description_only
-    return unless opts[:dump_group_description_only]
-
     puts "\n--- Group Descriptions ---------------------"
     MiqGroup.all.map do |u|
       puts " description: #{u[:description]}"
@@ -65,9 +62,36 @@ class Dump
   end
 
 
-  def dump_users 
-    return unless opts[:dump_users]
+  def dump_one_user 
+    puts "\n--- User -----------------------------------"
 
+    u = User.find_by(:name => opts[:dump_one_user])
+    puts "- User: ------------------------------------\n"
+    puts "--------------------------------------------\n"
+    puts "             name: #{u[:name]}"
+    puts "           userid: #{u[:userid]}"
+    puts "       created_on: #{u[:created_on]}"
+    puts "       updated_on: #{u[:updated_on]}"
+    puts "               id: #{u[:id]}"
+    puts "       first_name: #{u[:first_name]}"
+    puts "        last_name: #{u[:last_name]}"
+    puts "            email: #{u[:email]}"
+    puts "             icon: #{u[:icon]}"
+    puts "         settings: #{u[:settings]}"
+    puts "        lastlogon: #{u[:lastlogon]}"
+    puts "       lastlogoff: #{u[:lastlogoff]}"
+    puts " current_group_id: #{u[:current_group_id]}"
+    puts "--------------------------------------------\n"
+
+    # JJV g = MiqGroup.find_by(:id => u[:current_group_id]).miq_user_role.name
+    g = MiqGroup.find_by(:id => u[:current_group_id])
+    puts "- Group ------------------------------------\n"
+    puts " description:      #{g[:description]}"
+    puts " role:             #{g.miq_user_role.name}"
+    puts "--------------------------------------------\n"
+  end
+
+  def dump_users 
     puts "\n--- Users ----------------------------------"
     User.all.map do |u|
       puts "       created_on: #{u[:created_on]}"
@@ -90,8 +114,6 @@ class Dump
   end
 
   def dump_userid_only 
-    return unless opts[:dump_userid_only]
-
     puts "\n--- userids --------------------------------"
     User.all.map do |u|
       puts "  userid: #{u[:userid]}"
@@ -101,12 +123,10 @@ class Dump
   end
 
   def delete_a_user
-    return unless opts[:delete_a_user_given]
-    puts("#{__method__} Invokded delete user: ->#{opts[:delete_a_user_given]}<-")
+    puts("#{__method__} Invokded delete user: ->#{opts[:delete_a_user]}<-")
   end
 
   def delete_all_users
-    return unless opts[:delete_all_users]
     puts("#{__method__} Delete all users")
   end
 
@@ -119,6 +139,11 @@ class Cli
     args.shift if args.first == "--" # Handle when called through script/runner
 
     self.opts = Trollop.options(args) do
+      opt :dump_one_user,
+          "Display infor for one user",
+          :short   => "u",
+          :type    => :string
+
       opt :dump_users,
           "Display the users",
           :short   => "U",
@@ -127,7 +152,7 @@ class Cli
 
       opt :dump_userid_only,
           "Only display the userid",
-          :short   => "u",
+          :short   => "i",
           :default => false,
           :type    => :flag
 
