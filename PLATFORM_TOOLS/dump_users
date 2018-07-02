@@ -63,32 +63,35 @@ class Dump
 
 
   def dump_one_user 
-    puts "\n--- User -----------------------------------"
 
     u = User.find_by(:name => opts[:dump_one_user])
-    puts "- User: ------------------------------------\n"
-    puts "--------------------------------------------\n"
-    puts "             name: #{u[:name]}"
-    puts "           userid: #{u[:userid]}"
-    puts "       created_on: #{u[:created_on]}"
-    puts "       updated_on: #{u[:updated_on]}"
-    puts "               id: #{u[:id]}"
-    puts "       first_name: #{u[:first_name]}"
-    puts "        last_name: #{u[:last_name]}"
-    puts "            email: #{u[:email]}"
-    puts "             icon: #{u[:icon]}"
-    puts "         settings: #{u[:settings]}"
-    puts "        lastlogon: #{u[:lastlogon]}"
-    puts "       lastlogoff: #{u[:lastlogoff]}"
-    puts " current_group_id: #{u[:current_group_id]}"
-    puts "--------------------------------------------\n"
+    puts "\n--- User -----------------------------------"
+    puts "                   name: #{u[:name]}"
+    puts "                 userid: #{u[:userid]}"
+    puts "             created_on: #{u[:created_on]}"
+    puts "             updated_on: #{u[:updated_on]}"
+    puts "                     id: #{u[:id]}"
+    puts "             first_name: #{u[:first_name]}"
+    puts "              last_name: #{u[:last_name]}"
+    puts "                  email: #{u[:email]}"
+    puts "                   icon: #{u[:icon]}"
+    puts "               settings: #{u[:settings]}"
+    puts "              lastlogon: #{u[:lastlogon]}"
+    puts "             lastlogoff: #{u[:lastlogoff]}"
+    puts "       current_group_id: #{u[:current_group_id]}"
+    puts "\n"
 
-    # JJV g = MiqGroup.find_by(:id => u[:current_group_id]).miq_user_role.name
+    puts "\n- Groups/Roles the user belongs to ---------"
+    u.miq_groups.each do |g|
+      puts "      #{g[:description]} / #{g.miq_user_role.name}"
+    end
+    puts "\n"
+
     g = MiqGroup.find_by(:id => u[:current_group_id])
-    puts "- Group ------------------------------------\n"
-    puts " description:      #{g[:description]}"
-    puts " role:             #{g.miq_user_role.name}"
-    puts "--------------------------------------------\n"
+    puts "\n- Current Group/Role------------------------"
+    puts "      #{g[:description]} / #{g.miq_user_role.name}"
+    puts "\n"
+
   end
 
   def dump_users 
