@@ -84,7 +84,7 @@ deploy_mgr() {
   application_domain="$4"
 
   echo -e "\n  # Create the template for deployment and verify it is now available in your project"
-  run_cmd "oc create -f ${templates}/${template_name}-template.yaml"
+  run_cmd "oc create -f ${templates}/${template_prefix}-template.yaml"
 
   if [[ "${application_domain}" == "" ]]; then
     run_cmd "oc new-app --template=${template_name}"
