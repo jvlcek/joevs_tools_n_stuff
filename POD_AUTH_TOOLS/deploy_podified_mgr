@@ -15,8 +15,8 @@ add_service_accounts_to_anyuid_scc() {
   template_name="$2"
 
   echo -e "\n  # Add the ${template_name}-anyuid and ${template_name}-orchestrator service accounts to the anyuid Security Context Constraints (SCC)"
-  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:${template_name}-anyuid"
-  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:${template_name}-orchestrator"
+  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:${template_prefix}-anyuid"
+  run_cmd "oc adm policy add-scc-to-user anyuid system:serviceaccount:${project_name}:${template_prefix}-orchestrator"
   run_cmd "oc describe scc anyuid | grep Users"
 }
 
@@ -30,7 +30,7 @@ add_privileged_service_accounts_to_privileged_scc() {
   template_name="$2"
 
   echo -e "\n  # Add the ${template_name}-privileged service account to the privileged Security Context Constraints (SCC)"
-  run_cmd "oc adm policy add-scc-to-user privileged system:serviceaccount:${project_name}:${template_name}-privileged"
+  run_cmd "oc adm policy add-scc-to-user privileged system:serviceaccount:${project_name}:${template_prefix}-privileged"
   run_cmd "oc describe scc privileged | grep Users"
 }
 
@@ -53,7 +53,7 @@ setup_the_httpd_service_account() {
     scc="anyuid"
   fi
 
-  run_cmd "oc adm policy add-scc-to-user ${scc} system:serviceaccount:${project_name}:${template_name}-httpd"
+  run_cmd "oc adm policy add-scc-to-user ${scc} system:serviceaccount:${project_name}:${template_prefix}-httpd"
   run_cmd "oc describe scc ${scc} | grep Users"
 }
 
