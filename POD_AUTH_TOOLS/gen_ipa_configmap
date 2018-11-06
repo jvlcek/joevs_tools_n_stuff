@@ -25,14 +25,20 @@ set_cmg_pod() {
 hack_etc_hosts() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  echo -e "\n  # Invoking echo 10.8.97.16 joev-ipa16.jvlcek.redhat.com joev-ipa16 >> /etc/hosts -add on $cmg_pod ..."
-
-  long_cmd="oc exec $cmg_pod -- bash -c 'echo \"10.8.97.16 joev-ipa16.jvlcek.redhat.com joev-ipa16\" >> /etc/hosts'"
+  long_cmd="oc exec $cmg_pod -- bash -c 'echo \"$(server2ip) ${server} $(server2host)\" >> /etc/hosts'"
 
   run_cmd "${long_cmd}"
   if [[ $run_cmd_status -ne 0 ]]; then
     error_exit "${FUNCNAME} hack etc hosts Failed"
   fi
+}
+
+server2ip() {
+  ping -c1 -n ${server} | head -n1 | sed "s/.*(\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)).*/\1/g"
+}
+
+server2host() {
+  echo "${server}" | cut -d "." -f 1
 }
 
 ipa_host_add() {
