@@ -147,7 +147,7 @@ parse_podify_args() {
   echo "application_domain   ->${application_domain}<-"
   echo "template_name        ->${template_name}<-"
   echo "template_prefix      ->${template_prefix}<-"
-  echo "templates            ->${template}<-"
+  echo "templates            ->${templates}<-"
   echo "minishift            ->${minishift}<-"
   echo "trial_run            ->${trial_run}<-"
 }

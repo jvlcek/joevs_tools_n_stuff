@@ -7,6 +7,7 @@ if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
 
 set_cmg_pod() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
+  echo -e "\n*** trial_run ${trial_run} ***"
 
   if [[ $trial_run == false ]]; then
     cmg_pod=`cmg_pod`
@@ -19,6 +20,33 @@ set_cmg_pod() {
   fi
 
   echo -e "\n  # Configmap Generator Pod: ${cmg_pod}"
+}
+
+hack_etc_hosts() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  echo -e "\n  # Invoking echo 10.8.97.16 joev-ipa16.jvlcek.redhat.com joev-ipa16 >> /etc/hosts -add on $cmg_pod ..."
+
+  long_cmd="oc exec $cmg_pod -- bash -c 'echo \"10.8.97.16 joev-ipa16.jvlcek.redhat.com joev-ipa16\" >> /etc/hosts'"
+
+  run_cmd "${long_cmd}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} hack etc hosts Failed"
+  fi
+}
+
+ipa_host_add() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  echo -e "\n  # Invoking ipa host-add on $cmg_pod ..."
+
+  long_cmd="oc exec $cmg_pod -- bash -c 'ipa host-add ${mgr_host}'"
+
+  run_cmd "${long_cmd}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    # Don't exit if this fails
+    echo -e "${FUNCNAME} ipa host-add Failed. Continuing"
+  fi
 }
 
 generate_configmap() {
@@ -37,7 +65,7 @@ generate_configmap() {
   long_cmd+="--ipa-principal=${principal_user} "
   long_cmd+="--ipa-password=${principal_user_password} "
   long_cmd+="--debug "
-  long_cmd+="-o /tmp/external-ipa.yaml '"
+  long_cmd+="-o /tmp/external-cm.yaml '"
 
   run_cmd "${long_cmd}"
   if [[ $run_cmd_status -ne 0 ]]; then
@@ -48,8 +76,8 @@ generate_configmap() {
 fecth_configmap() {
   echo -e "\n*** Invoked function ${FUNCNAME} ***"
 
-  echo -e "\n  # Fetching external-ipa.yaml"
-  run_cmd "oc cp $cmg_pod:/tmp/external-ipa.yaml ./external-ipa.yaml"
+  echo -e "\n  # Fetching external-cm.yaml"
+  run_cmd "oc cp $cmg_pod:/tmp/external-cm.yaml ./external-cm.yaml"
   if [[ $run_cmd_status -ne 0 ]]; then
     error_exit "${FUNCNAME} Failed to fetch the new config map"
   fi
@@ -57,6 +85,8 @@ fecth_configmap() {
 
 parse_cmg_args "$@"
 set_cmg_pod
+hack_etc_hosts
+ipa_host_add
 generate_configmap
 fecth_configmap
 
