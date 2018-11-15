@@ -10,7 +10,7 @@ usage() {
   echo "  -h <Manager Host> \\"
   echo "  -s <directory server> \\"
   echo "  -d <domain> \\"
-  echo "  -r <real> \\"
+  echo "  -r <realm> \\"
   echo "  -u <directory server principal user> \\"
   echo "  -p <directory server principal user password> \\"
   echo ""

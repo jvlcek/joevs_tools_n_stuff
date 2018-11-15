@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+script_path=${0%/*}
+if [[ ! -d "$script_path" ]]; then script_path="$PWD"; fi
+. "$script_path/parse_cmg_args"
+. "$script_path/podified_utils"
+. "$script_path/cmd_line_utils"
+
+set_cmg_pod() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+  echo -e "\n*** trial_run ${trial_run} ***"
+
+  if [[ $trial_run == false ]]; then
+    cmg_pod=`cmg_pod`
+  else
+    cmg_pod="CMG_POD_TRIAL_RUN"
+  fi
+
+  if [[ -z "$cmg_pod" ]]; then
+    error_exit "${FUNCNAME} Configmap Generator Pod is not running"
+  fi
+
+  echo -e "\n  # Configmap Generator Pod: ${cmg_pod}"
+}
+
+hack_etc_hosts() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  long_cmd="oc exec $cmg_pod -- bash -c 'echo \"$(fqdn2ip ${server}) ${server} $(fqdn2host ${server})\" >> /etc/hosts'"
+  run_cmd "${long_cmd}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} hack etc hosts Failed"
+  fi
+
+  long_cmd="oc exec $cmg_pod -- bash -c 'echo \"$(fqdn2ip ${domain}) ${domain} $(fqdn2host ${domain})\" >> /etc/hosts'"
+  run_cmd "${long_cmd}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} hack etc hosts Failed"
+  fi
+}
+
+fqdn2ip() {
+  fqdn=$1
+  ping -c1 -n ${fqdn} | head -n1 | sed "s/.*(\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)).*/\1/g"
+}
+
+fqdn2host() {
+  fqdn=$1
+  echo "${fqdn}" | cut -d "." -f 1
+}
+
+generate_configmap() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  # Devel: cmg_cmd="/opt/httpd_configmap_generator/bin/httpd_configmap_generator"
+  cmg_cmd="httpd_configmap_generator"
+  echo -e "\n  # Invoking $cmg_cmd ipa on $cmg_pod ..."
+
+  long_cmd="oc exec $cmg_pod -- bash -c '$cmg_cmd active-directory "
+  long_cmd+="--force "
+  long_cmd+="--host=${mgr_host} "
+  long_cmd+="--ad-domain=${domain} "
+  long_cmd+="--ad-server=${server} "
+  long_cmd+="--ad-user=${principal_user} "
+  long_cmd+="--ad-password=${principal_user_password} "
+  long_cmd+="--debug "
+  long_cmd+="-o /tmp/external-ad-cm.yaml '"
+
+  run_cmd "${long_cmd}"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} Failed to generate the config map"
+  fi
+}
+
+fecth_configmap() {
+  echo -e "\n*** Invoked function ${FUNCNAME} ***"
+
+  echo -e "\n  # Fetching external-ad-cm.yaml"
+  run_cmd "oc cp $cmg_pod:/tmp/external-ad-cm.yaml ./external-ad-cm.yaml"
+  if [[ $run_cmd_status -ne 0 ]]; then
+    error_exit "${FUNCNAME} Failed to fetch the new config map"
+  fi
+}
+
+parse_cmg_args "$@"
+set_cmg_pod
+hack_etc_hosts
+generate_configmap
+fecth_configmap
+
+# JJV scale_down_cmg
+
