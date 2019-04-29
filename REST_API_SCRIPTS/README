@@ -1,0 +1,5 @@
+This directory contains:
+  
+  - REST API data files used to pass data to `curl POST` commands
+    used by the exmples in /Users/jvlcek/MYJUNK/scripts/curl_examples.bash
+
