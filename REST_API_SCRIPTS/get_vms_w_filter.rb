@@ -10,6 +10,11 @@ class MiqApiSimpleExample
     @miq_ipaddr = ipaddr
   end
 
+  def self.error_exit(msg)
+    puts msg
+    exit
+  end
+
   def get_vms
     miq_url       = "https://#{miq_ipaddr}"
     miq_user      = "admin"
@@ -36,15 +41,10 @@ class MiqApiSimpleExample
       puts "Response: #{e.response}"
     end
   end
-
-  def error_exit(msg)
-    puts msg
-    exit
-  end
 end
 
 if __FILE__ == $PROGRAM_NAME
-    error_exit "No MiQ Appliance hostname or ipaddr specified" unless ARGV.count == 1
+  MiqApiSimpleExample.error_exit "No MiQ Appliance hostname or ipaddr specified" unless ARGV.count == 1
 
   MiqApiSimpleExample.new(ARGV[0]).get_vms
 end
