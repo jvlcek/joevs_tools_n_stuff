@@ -1,49 +1,48 @@
 #!/usr/bin/env ruby
 
-require 'rest-client'
+require 'net/http'
+require 'openssl'
 require 'json'
+require 'uri'
 
 class MiqApiSimpleExample
-  attr_accessor :miq_ipaddr
+  attr_accessor :ipaddr, :user, :pw, :port
 
-  def initialize(ipaddr)
-    @miq_ipaddr = ipaddr
+  def initialize(ipaddr, user = "admin", pw = "smartvm")
+    @ipaddr = ipaddr
+    @user = user
+    @pw = pw
+    @port = 443 # HTTP uses port 80 and HTTPS uses port 443
   end
 
-  def get_vms
-    miq_url       = "https://#{miq_ipaddr}"
-    miq_user      = "admin"
-    miq_password  = "smartvm"
-    begin
-      RestClient.log = 'stdout'
+  def self.error_exit(msg)
+    puts msg
+    exit
+  end
 
-      response = RestClient::Request.new(:method     => "get",
-                                         :url        => miq_url + "/api/vms",
-                                         :headers    => {:content_type=>"application/json"},
-                                         :user       =>  miq_user,
-                                         :password   => miq_password,
-                                         :verify_ssl => false).execute
+  def get_api
+    headers = {'Accept' => 'application/json', 'authorization' =>  'Basic ' + ["#{user}:#{pw}"].pack('m0') }
+
+    begin
+      net_http = Net::HTTP.new(ipaddr, port)
+      net_http.use_ssl = true
+      net_http.read_timeout = 300
+      net_http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+      res = net_http.get("/api/vms", headers)
+
       puts "Reply: "
-      puts JSON.pretty_generate(JSON.parse(response.body.strip))
-      # JJV require 'pry'; binding.pry # JJV
+      puts JSON.pretty_generate(JSON.parse(res.body.strip))
 
     rescue Exception => e
       puts "Error: #{e.message}"
-      puts "Response: #{e.response}"
+      puts "res: #{e.response}"
     end
-  end
-
-  def error_exit(msg)
-    puts msg
-    exit
   end
 end
 
 if __FILE__ == $PROGRAM_NAME
-    error_exit "No MiQ Appliance hostname or ipaddr specified" unless ARGV.count == 1
+  MiqApiSimpleExample.error_exit "No MiQ Appliance hostname or ipaddr specified" unless ARGV.count == 1
 
-  MiqApiSimpleExample.new(ARGV[0]).get_vms
+  MiqApiSimpleExample.new(ARGV[0]).get_api
 end
-  
-
-

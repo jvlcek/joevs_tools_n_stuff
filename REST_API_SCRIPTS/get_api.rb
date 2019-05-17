@@ -5,12 +5,13 @@ require 'openssl'
 require 'json'
 
 class MiqApiSimpleExample
-  attr_accessor :miq_ipaddr, :miq_user, :miq_pw
+  attr_accessor :ipaddr, :user, :pw, :port
 
   def initialize(ipaddr, user = "admin", pw = "smartvm")
-    @miq_ipaddr = ipaddr
-    @miq_user = user
-    @miq_pw = pw
+    @ipaddr = ipaddr
+    @user = user
+    @pw = pw
+    @port = 443 # HTTP uses port 80 and HTTPS uses port 443
   end
 
   def self.error_exit(msg)
@@ -19,19 +20,19 @@ class MiqApiSimpleExample
   end
 
   def get_api
-    headers = {'Accept' => 'application/json', 'authorization' =>  'Basic ' + ["#{miq_user}:#{miq_pw}"].pack('m0') }
+    headers = {'Accept' => 'application/json', 'authorization' =>  'Basic ' + ["#{user}:#{pw}"].pack('m0') }
 
     begin
 
-      net_http = Net::HTTP.new(miq_ipaddr, 443)
+      net_http = Net::HTTP.new(ipaddr, port)
       net_http.use_ssl = true
       net_http.read_timeout = 300
       net_http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-      response = net_http.get("/api", headers)
+      res = net_http.get("/api", headers)
 
       puts "Reply: "
-      puts JSON.pretty_generate(JSON.parse(response.body.strip))
+      puts JSON.pretty_generate(JSON.parse(res.body.strip))
 
     rescue Exception => e
       puts "Error: #{e.message}"
