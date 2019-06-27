@@ -28,6 +28,12 @@ function print_curl_examples {
   echo "# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-="
   echo ""
 
+  echo "# GET vms with filtering"
+  echo "# --------------------------------------------------"
+
+  echo "  curl --user admin:smartvm --insecure --request GET --header \"Content-Type: application/json\" -G https://${miq_ipaddr}:${port}/api/vms -d \"expand=resources&attributes=name\" -d \"filter[]=name='JoeV*'\" | jsonpp "
+  echo ""
+
   echo "# GET automate_domains"
   echo "# --------------------------------------------------"
 

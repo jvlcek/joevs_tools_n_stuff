@@ -1,3 +1,5 @@
 run_*
 .run_*.swp
+Gemfile.lock
+
 

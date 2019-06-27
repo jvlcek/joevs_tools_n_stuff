@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 
-require "net/http"
-require "uri"
-require "json"
+require 'json'
+require 'net/http'
+require 'openssl'
+require 'uri'
 
 uri = URI.parse("https://#{ENV['MIQ']}/api/vms/?expand=resources&attributes=name,vendor&filter[]=name='JoeV*'")
 
