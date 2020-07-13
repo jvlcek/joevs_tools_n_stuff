@@ -11,6 +11,11 @@ function print_curl_examples {
   port="${https_port}"
 
   echo "# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-="
+  echo "# User jsonpp or jq to pretty print the API output"
+  echo "# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-="
+  echo ""
+
+  echo "# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-="
   echo "# curl to appliance at IPAddr ->${1}<-"
   echo "# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-="
   echo ""
@@ -20,7 +25,7 @@ function print_curl_examples {
   echo "# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-="
   echo ""
 
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/ | jsonpp "
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/ | jq "
   echo ""
 
   echo "# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-="
@@ -31,14 +36,14 @@ function print_curl_examples {
   echo "# GET vms with filtering"
   echo "# --------------------------------------------------"
 
-  echo "  curl --user admin:smartvm --insecure --request GET --header \"Content-Type: application/json\" -G https://${miq_ipaddr}:${port}/api/vms -d \"expand=resources&attributes=name\" -d \"filter[]=name='JoeV*'\" | jsonpp "
+  echo "  curl --user admin:smartvm --insecure --request GET --header \"Content-Type: application/json\" -G https://${miq_ipaddr}:${port}/api/vms -d \"expand=resources&attributes=name\" -d \"filter[]=name='JoeV*'\" | jq "
   echo ""
 
   echo "# GET automate_domains"
   echo "# --------------------------------------------------"
 
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/automate_domains | jsonpp "
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/automate_domains/1 | jsonpp "
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/automate_domains | jq "
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/automate_domains/1 | jq "
   echo ""
 
   echo "# POST automate_domains create_from_git from github"
@@ -59,7 +64,7 @@ function print_curl_examples {
   echo "# --------------------------------------------------"
   echo ""
 
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tasks/69 | jsonpp "
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tasks/69 | jq "
   echo ""
 
   echo "# +-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-=+-="
@@ -71,7 +76,7 @@ function print_curl_examples {
   echo "# --------------------------------------------------"
   echo ""
 
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/users | jsonpp"
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/users | jq"
   echo ""
 
   echo "# POST create users"
@@ -90,8 +95,8 @@ function print_curl_examples {
   echo "# --------------------------------------------------"
   echo ""
 
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants | jsonpp"
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants/1 | jsonpp"
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants | jq"
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants/1 | jq"
   echo ""
 
   echo "# POST create tenants"
@@ -111,13 +116,18 @@ function print_curl_examples {
 
   echo "# GET quotas"
   echo "# --------------------------------------------------"
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants/2/quotas | jsonpp"
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants/2/quotas/7 | jsonpp"
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants/2/quotas | jq"
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants/2/quotas/7 | jq"
   echo ""
 
   echo "# GET quotas Virtual Attributes used allocated and available"
   echo "# --------------------------------------------------"
-  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants/2/quotas/7?attributes=used,allocated,available | jsonpp"
+  echo "  curl --user admin:smartvm -k -X GET -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/tenants/2/quotas/7?attributes=used,allocated,available | jq"
+  echo ""
+
+  echo "# OPTIONS list all available attributes included virtual attributes"
+  echo "# --------------------------------------------------"
+  echo "  curl --user admin:smartvm -k -X OPTIONS -H \"Accept: application/json\" https://${miq_ipaddr}:${port}/api/vms | jq"
   echo ""
 
 }
