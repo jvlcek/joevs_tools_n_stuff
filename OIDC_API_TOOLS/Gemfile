@@ -1,0 +1,9 @@
+source 'https://rubygems.org'
+
+gem "awesome_print"
+gem "json"
+gem "optimist"
+gem "pry"
+gem "byebug"
+gem "pry-byebug"               
+

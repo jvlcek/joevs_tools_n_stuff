@@ -1,0 +1,3 @@
+Run example:
+
+ ./oidc_oauth2_curl_api.rb -u jvlcek -p smartvm -c ./manageiq-external-auth-openidc.conf
