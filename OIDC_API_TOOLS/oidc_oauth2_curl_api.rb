@@ -4,12 +4,16 @@ require "json"
 require "pp"
 require "optimist"
 
-# class ApiOidcExerciser
+# require 'pry'; binding.pry # JJV
+
+class OidcApiExcersiserError < StandardError; end
 
 class OidcApiExcersiser
 
-  attr_reader :user, :password, :infra_man_server, :oidc_client_secret, :oidc_server, :oidc_realm, :oidc_client_id, :token_endpoint, :token_introspection_endpoint
-  attr_accessor :opts
+  attr_reader :user, :password, :infra_man_server,
+              :oidc_client_secret, :oidc_client_id,
+              :token_endpoint, :token_introspection_endpoint
+  attr_accessor :opts, :conf_hash
 
   def initialize
     parse(ARGV)
@@ -17,24 +21,65 @@ class OidcApiExcersiser
     @user = @opts[:user]
     @password = @opts[:password]
 
-    conf_hash = conf_to_hash(@opts[:conf_file])
+    @conf_hash = get_conf_hash
+    @infra_man_server = server_name
+    @oidc_client_secret = client_secret
+    @oidc_client_id = client_id
+    @token_introspection_endpoint = introspection_endpoint
 
-
-    @infra_man_server = conf_hash["ServerName"]
-    @infra_man_server.gsub!(/https:\/\//, '')
-    @infra_man_server.gsub!(/\//, '')
-
-    @oidc_client_secret = conf_hash["OIDCOAuthClientSecret"]
-
-    # JJV REMOVE THESE
-    @oidc_server = "joev-keycloak.jvlcek.redhat.com:8443"
-    @oidc_realm = "auth/realms/miq"
-
-
-    @oidc_client_id = conf_hash["OIDCCLientID"]
-    @token_introspection_endpoint = conf_hash["OIDCOAuthIntrospectionEndpoint"]
-    @token_endpoint = @token_introspection_endpoint.gsub(/introspect/, '')
+    @token_endpoint = token_endpoint
   end
+
+  def get_conf_hash
+
+    return {} if @opts[:conf_file].nil?
+
+    conf_to_hash(@opts[:conf_file])
+  end
+
+  def server_name
+    return @opts[:servername] unless @opts[:servername].nil?
+
+    raise OidcApiExcersiserError, "No ServerName found" unless @conf_hash.key?("servername")
+
+    server_name = @conf_hash["servername"]
+    server_name.gsub!(/https:\/\//, '')
+    server_name.gsub!(/\//, '')
+
+    server_name
+  end
+
+  def client_secret
+    return @opts[:oidcclientsecret] unless @opts[:oidcclientsecret].nil?
+
+    raise OidcApiExcersiserError, "No OIDCClientSecret found" unless @conf_hash.key?("oidcclientsecret")
+
+    @conf_hash["oidcclientsecret"]
+  end
+
+  def client_id
+    return @opts[:oidcclientid] unless @opts[:oidcclientid].nil?
+
+    raise OidcApiExcersiserError, "No OIDCClientId found" unless @conf_hash.key?("oidcclientid")
+
+    @conf_hash["oidcclientid"]
+  end
+
+  def introspection_endpoint
+    return @opts[:oidcoauthintrospectionendpoint] unless @opts[:oidcoauthintrospectionendpoint].nil?
+
+    raise OidcApiExcersiserError, "No IntrospectionEndpoint found" unless @conf_hash.key?("oidcoauthintrospectionendpoint")
+
+    @conf_hash["oidcoauthintrospectionendpoint"]
+  end
+
+  def token_endpoint
+    return @opts[:oidcprovidertokenendpoint] unless @opts[:oidcprovidertokenendpoint].nil?
+    return @conf_hash["oidcprovidertokenendpoint"] if @conf_hash.key?("oidcprovidertokenendpoint")
+
+    @token_introspection_endpoint.gsub(/introspect/, '')
+  end
+
 
   def display_setup
     puts "   ----------------------------- ----------------------------------------"
@@ -163,12 +208,12 @@ class OidcApiExcersiser
 
   def conf_to_hash(fn)
     Hash[File.readlines(fn, chomp: true).map do |l|
-      if l.empty?
+      if l.strip.empty?
         ["empty", nil]
       else
         Array(l.split(' ').take(2))
       end
-    end ]
+    end ].transform_keys(&:downcase)
   end
 
   def parse(args)
@@ -191,7 +236,37 @@ class OidcApiExcersiser
             "OIDC config file, manageiq-external-auth-openidc.conf",
             :short       => "c",
             :type       => :string,
-            :required   => true
+            :required   => false
+
+        opt :servername,
+            "OIDC ServerName from the config file without the https:// e.g. my-miq.example.com",
+            :short       => "n",
+            :type       => :string,
+            :required   => false
+
+        opt :oidcclientsecret,
+            "In the config file at OIDCClientSecret.",
+            :short       => "s",
+            :type       => :string,
+            :required   => false
+
+        opt :oidcclientid,
+            "In the config file at OIDCClientID.",
+            :short       => "d",
+            :type       => :string,
+            :required   => false
+
+        opt :oidcoauthintrospectionendpoint,
+            "In the config file at OIDCOauthIntrospectionEndpoint.",
+            :short       => "i",
+            :type       => :string,
+            :required   => false
+
+        opt :oidcprovidertokenendpoint,
+            "In the config file at OIDCProviderTokenEndpoint. Or OIDCOauthIntrospectionEndpoint without /introspection",
+            :short       => "t",
+            :type       => :string,
+            :required   => false
        end
        puts_red("User provided settings: #{@opts}")
   end
@@ -202,7 +277,6 @@ end
   
 if __FILE__ == $PROGRAM_NAME   
   oidc_api_exerciser = OidcApiExcersiser.new
-
 
   oidc_api_exerciser.display_setup
   oidc_api_exerciser.api_basic_admin

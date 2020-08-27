@@ -1,3 +1,27 @@
-Run example:
+Program: oidc_oauth2_curl_api.rb
+
+Usage: ruby ./oidc_oauth2_curl_api.rb [opts]
+  -u, --user=<s>                              An OIDC user
+  -p, --password=<s>                          OIDC user's password
+  -c, --conf-file=<s>                         OIDC config file, manageiq-external-auth-openidc.conf
+  -n, --servername=<s>                        OIDC ServerName from the config file without the https:// e.g. my-miq.example.com
+  -s, --oidcclientsecret=<s>                  In the config file at OIDCClientSecret.
+  -d, --oidcclientid=<s>                      In the config file at OIDCClientID.
+  -i, --oidcoauthintrospectionendpoint=<s>    In the config file at OIDCOauthIntrospectionEndpoint.
+  -t, --oidcprovidertokenendpoint=<s>         In the config file at OIDCProviderTokenEndpoint. Or OIDCOauthIntrospectionEndpoint
+                                              without /introspection
+  -h, --help                                  Show this message
+
+Run Example 1:
 
  ./oidc_oauth2_curl_api.rb -u jvlcek -p smartvm -c ./manageiq-external-auth-openidc.conf
+
+Run Example 2:
+
+ ./oidc_oauth2_curl_api.rb -u jvlcek -p smartvm \
+   -n example-miq-httpd.10.8.96.54.xip.io \
+   -s be4b06d5-bd15-45de-9433-07f058618080 \
+   -d example-oidc \
+   -i https://keycloak-example-keycloak.10.8.96.54.nip.io/auth/realms/miq/protocol/openid-connect/token/introspect \
+   -t https://keycloak-example-keycloak.10.8.96.54.nip.io/auth/realms/miq/protocol/openid-connect/token
+
