@@ -221,13 +221,13 @@ class OidcApiExcersiser
         banner "Usage: ruby #{$PROGRAM_NAME} [opts]\n"
 
         opt :user,
-            "An OIDC user",
+            "The user being authenticated",
             :short       => "u",
             :type       => :string,
             :required   => true
 
         opt :password,
-            "OIDC user's password",
+            "The password for the user being authenticated",
             :short       => "p",
             :type       => :string,
             :required   => true
@@ -239,31 +239,31 @@ class OidcApiExcersiser
             :required   => false
 
         opt :servername,
-            "OIDC ServerName from the config file without the https:// e.g. my-miq.example.com",
+            "The ManageIQ server name. ServerName from the config file without the https:// e.g. my-miq.example.com",
             :short       => "n",
             :type       => :string,
             :required   => false
 
         opt :oidcclientsecret,
-            "In the config file at OIDCClientSecret.",
+            "OIDCClientSecret from the OpenID-Connect configuration.",
             :short       => "s",
             :type       => :string,
             :required   => false
 
         opt :oidcclientid,
-            "In the config file at OIDCClientID.",
+            "OIDCClientID from the OpenID-Connect configuration.",
             :short       => "d",
             :type       => :string,
             :required   => false
 
         opt :oidcoauthintrospectionendpoint,
-            "In the config file at OIDCOauthIntrospectionEndpoint.",
+            "OIDCOauthIntrospectionEndpoint from the OpenID-Connect configuration.",
             :short       => "i",
             :type       => :string,
             :required   => false
 
         opt :oidcprovidertokenendpoint,
-            "In the config file at OIDCProviderTokenEndpoint. Or OIDCOauthIntrospectionEndpoint without /introspection",
+            "OIDCProviderTokenEndpoint from the OpenID-Connect configuration. Or OIDCOauthIntrospectionEndpoint without /introspection",
             :short       => "t",
             :type       => :string,
             :required   => false
